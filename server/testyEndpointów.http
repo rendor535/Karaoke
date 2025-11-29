@@ -1,0 +1,27 @@
+### 
+POST http://localhost:5159/auth/login
+Content-Type: application/json
+
+{
+  "Email": "pszybiak@gmail.com",
+  "Password": "sigma1"
+}
+
+###
+POST http://localhost:5159/auth/login
+Content-Type: application/json
+
+{
+  "Email": "dwisniowski@gmail.com",
+  "Password": "sigma2"
+}
+###
+POST https://localhost:7205/auth/register
+Content-Type: application/json
+
+{
+  "email": "kokos@test.com",
+  "password": "Test123!",
+  "firstName": "A",
+  "lastName": "B"
+}

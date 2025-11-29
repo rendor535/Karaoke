@@ -1,0 +1,89 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using server.Data;
+using server.Models;
+using System.Security.Claims;
+
+[ApiController]
+[Route("sessions")]
+public class SessionController : ControllerBase
+{
+    private readonly ApplicationDbContext _db;
+    public SessionController(ApplicationDbContext db) => _db = db;
+
+    private int GetUserId()
+    {
+        return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+    }
+
+    // Utwórz sesję
+    [Authorize]
+    [HttpPost("create")]
+    public async Task<IActionResult> CreateSession([FromBody] string name)
+    {
+        var session = new Session
+        {
+            Name = name,
+            UserId = GetUserId()
+        };
+
+        _db.Sessions.Add(session);
+        await _db.SaveChangesAsync();
+
+        return Ok(session);
+    }
+
+    // Dodaj gracza (nick)
+    [Authorize]
+    [HttpPost("{sessionId}/add-player")]
+    public async Task<IActionResult> AddPlayer(int sessionId, [FromBody] string nick)
+    {
+        var player = new SessionPlayer
+        {
+            SessionId = sessionId,
+            Nick = nick
+        };
+
+        _db.SessionPlayers.Add(player);
+        await _db.SaveChangesAsync();
+        return Ok(player);
+    }
+
+    // Dodaj piosenkę do kolejki
+    [Authorize]
+    [HttpPost("{sessionId}/add-song")]
+    public async Task<IActionResult> AddSongToQueue(int sessionId, [FromBody] int songId)
+    {
+        var count = await _db.SessionQueueItems
+            .CountAsync(q => q.SessionId == sessionId);
+
+        var item = new SessionQueueItem
+        {
+            SessionId = sessionId,
+            SongId = songId,
+            Position = count + 1
+        };
+
+        _db.SessionQueueItems.Add(item);
+        await _db.SaveChangesAsync();
+
+        return Ok(item);
+    }
+
+    // Pobierz sesję z kolejką i graczami
+    [Authorize]
+    [HttpGet("{sessionId}")]
+    public async Task<IActionResult> GetSession(int sessionId)
+    {
+        var session = await _db.Sessions
+            .Include(s => s.Players)
+            .Include(s => s.Queue)
+                .ThenInclude(q => q.Song)
+            .FirstOrDefaultAsync(s => s.Id == sessionId);
+
+        if (session == null) return NotFound();
+
+        return Ok(session);
+    }
+}

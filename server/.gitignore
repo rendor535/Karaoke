@@ -1,0 +1,38 @@
+# Build folders
+bin/
+obj/
+Migrations/
+# Visual Studio project files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code settings
+.vscode/
+
+.http
+# Rider IDE files
+.idea/
+
+# Dotnet generated files
+*.dotCover
+
+# NuGet packages folder
+packages/
+
+# Publish output
+publish/
+
+# Logs
+*.log
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+#appsettings
+*.json
+
+appsettings.json
+appsettings.Development.json
