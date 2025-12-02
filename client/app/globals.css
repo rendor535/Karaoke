@@ -115,6 +115,14 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+.login-theme {
+  --background: #0b0b12;      
+  --foreground: #f3e8ff;
+  --card: #12121b;
+  --primary: #a855f7;
+  --primary-foreground: #0b0b12;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

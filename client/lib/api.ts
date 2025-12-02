@@ -1,4 +1,3 @@
-
 export const api = {
   login: async (email: string, password: string) => {
     const res = await fetch("http://localhost:5159/auth/login", {
