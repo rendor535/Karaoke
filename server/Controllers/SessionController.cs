@@ -1,3 +1,4 @@
+/*
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -87,3 +88,5 @@ public class SessionController : ControllerBase
         return Ok(session);
     }
 }
+
+*/

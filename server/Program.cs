@@ -29,7 +29,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowNextJs", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "https://localhost:3000")
+        policy.WithOrigins("http://localhost:3000")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -72,12 +72,12 @@ var app = builder.Build();
 app.UseCors("AllowNextJs");
 
 // Static files
-app.UseStaticFiles(); // wwwroot
+var filesPath = Path.Combine(Directory.GetCurrentDirectory(), "files");
+Directory.CreateDirectory(filesPath);
 
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "files")),
+    FileProvider = new PhysicalFileProvider(filesPath),
     RequestPath = "/files"
 });
 
@@ -90,7 +90,7 @@ app.UseSwaggerUI(c =>
 });
 
 // Middleware
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
@@ -100,7 +100,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     db.Database.Migrate();
-    // DbSeeder.Seed(db);
+    DbSeeder.Seed(db);
 }
 
 app.Run();
