@@ -1,7 +1,7 @@
 export default function SessionsPage() {
   return (
     <div>
-      sesje
+      NIENAWIDZE CORSÓW
     </div>
   );
 }

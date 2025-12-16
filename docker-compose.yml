@@ -9,9 +9,9 @@ services:
     -   ./files:/app/files
     container_name: api
     ports:
-      - "8080:8080"
+      - "5159:5159"
     environment:
-      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_URLS: http://+:5159
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=app;Username=postgres;Password=postgres
     depends_on:
