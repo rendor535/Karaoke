@@ -162,5 +162,62 @@ public class SessionController : ControllerBase
                 })
         });
     }
-    
+
+    // update session name
+    [Authorize]
+    [HttpPatch("{sessionId}")]
+    public async Task<IActionResult> Update(int sessionId, [FromBody] CreateSessionRequest request)
+    {
+        var userId = GetUserId();
+        var role = User.FindFirstValue(ClaimTypes.Role);
+
+        var session = await _db.Session.FirstOrDefaultAsync(s => s.Id == sessionId);
+        if (session == null)
+            return NotFound();
+
+        if (role != "Admin" && session.UserId != userId)
+            return Forbid();
+        if (!string.IsNullOrWhiteSpace(request.Name))
+            session.Name = request.Name.Trim();
+
+        await _db.SaveChangesAsync();
+
+        return Ok(new
+        {
+            session.Id,
+            session.Name,
+            session.CreatedAt
+        });
+    }
+
+    // usuwanie sesji i wszystkich powiązań
+    [Authorize]
+    [HttpDelete("{sessionId}")]
+    public async Task<IActionResult> Delete(int sessionId)
+    {
+        var userId = GetUserId();
+        var role = User.FindFirstValue(ClaimTypes.Role);
+
+        var session = await _db.Session
+            .Include(s => s.Players)
+            .Include(s => s.Queue)
+            .FirstOrDefaultAsync(s => s.Id == sessionId);
+
+        if (session == null)
+            return NotFound();
+
+        if (role != "Admin" && session.UserId != userId)
+            return Forbid();
+
+        // USUWANIE DZIECI
+        _db.SessionPlayer.RemoveRange(session.Players);
+        _db.SessionQueueItem.RemoveRange(session.Queue);
+
+        // USUWANIE SESJI
+        _db.Session.Remove(session);
+
+        await _db.SaveChangesAsync();
+
+        return NoContent();
+    }
 }
