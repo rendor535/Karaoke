@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using server.Data;
 using server.Models;
+using server.DTOs;
 using System.Security.Claims;
 
 [ApiController]
@@ -69,7 +70,7 @@ public class SessionPlayerController : ControllerBase
     // UPDATE
     [Authorize]
     [HttpPatch("{id}")]
-    public async Task<IActionResult> Update(int id, string? nick, int? totalScore)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateSessionPlayerRequest request)
     {
         var player = await _db.SessionPlayer
             .Include(p => p.Session)
@@ -81,11 +82,11 @@ public class SessionPlayerController : ControllerBase
         if (Role != "Admin" && player.Session.UserId != UserId)
             return Forbid();
 
-        if (!string.IsNullOrWhiteSpace(nick))
-            player.Nick = nick.Trim();
+        if (!string.IsNullOrWhiteSpace(request.Nick))
+            player.Nick = request.Nick.Trim();
 
-        if (totalScore.HasValue)
-            player.TotalScore = totalScore.Value;
+        if (request.TotalScore.HasValue)
+            player.TotalScore = request.TotalScore.Value;
 
         await _db.SaveChangesAsync();
 
