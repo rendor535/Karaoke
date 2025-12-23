@@ -1,13 +1,14 @@
-/*
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using server.Data;
 using server.Models;
+using server.DTOs;
 using System.Security.Claims;
 
+
 [ApiController]
-[Route("sessions")]
+[Route("session")]
 public class SessionController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
@@ -20,16 +21,22 @@ public class SessionController : ControllerBase
 
     // Utwórz sesję
     [Authorize]
-    [HttpPost("create")]
-    public async Task<IActionResult> CreateSession([FromBody] string name)
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateSessionRequest request)
     {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
         var session = new Session
         {
-            Name = name,
-            UserId = GetUserId()
+            Name = string.IsNullOrWhiteSpace(request.Name)
+                ? $"Session {DateTime.UtcNow:yyyy-MM-dd HH:mm}"
+                : request.Name.Trim(),
+
+            UserId = userId,
+            CreatedAt = DateTime.UtcNow
         };
 
-        _db.Sessions.Add(session);
+        _db.Session.Add(session);
         await _db.SaveChangesAsync();
 
         return Ok(session);
@@ -40,15 +47,34 @@ public class SessionController : ControllerBase
     [HttpPost("{sessionId}/add-player")]
     public async Task<IActionResult> AddPlayer(int sessionId, [FromBody] string nick)
     {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var role = User.FindFirstValue(ClaimTypes.Role);
+
+        var session = await _db.Session
+            .FirstOrDefaultAsync(s => s.Id == sessionId);
+
+        if (session == null)
+            return NotFound();
+
+        if (role != "Admin" && session.UserId != userId)
+            return Forbid();
+
         var player = new SessionPlayer
         {
             SessionId = sessionId,
-            Nick = nick
+            Nick = nick.Trim(),
+            TotalScore = 0
         };
 
-        _db.SessionPlayers.Add(player);
+        _db.SessionPlayer.Add(player);
         await _db.SaveChangesAsync();
-        return Ok(player);
+
+        return Ok(new
+        {
+            player.Id,
+            player.Nick,
+            player.TotalScore
+        });
     }
 
     // Dodaj piosenkę do kolejki
@@ -56,7 +82,19 @@ public class SessionController : ControllerBase
     [HttpPost("{sessionId}/add-song")]
     public async Task<IActionResult> AddSongToQueue(int sessionId, [FromBody] int songId)
     {
-        var count = await _db.SessionQueueItems
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var role = User.FindFirstValue(ClaimTypes.Role);
+
+        var session = await _db.Session
+            .FirstOrDefaultAsync(s => s.Id == sessionId);
+
+        if (session == null)
+            return NotFound();
+
+        if (role != "Admin" && session.UserId != userId)
+            return Forbid();
+
+        var count = await _db.SessionQueueItem
             .CountAsync(q => q.SessionId == sessionId);
 
         var item = new SessionQueueItem
@@ -66,10 +104,15 @@ public class SessionController : ControllerBase
             Position = count + 1
         };
 
-        _db.SessionQueueItems.Add(item);
+        _db.SessionQueueItem.Add(item);
         await _db.SaveChangesAsync();
 
-        return Ok(item);
+        return Ok(new
+        {
+            item.Id,
+            item.SongId,
+            item.Position
+        });
     }
 
     // Pobierz sesję z kolejką i graczami
@@ -77,16 +120,47 @@ public class SessionController : ControllerBase
     [HttpGet("{sessionId}")]
     public async Task<IActionResult> GetSession(int sessionId)
     {
-        var session = await _db.Sessions
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var role = User.FindFirstValue(ClaimTypes.Role);
+
+        var session = await _db.Session
             .Include(s => s.Players)
             .Include(s => s.Queue)
                 .ThenInclude(q => q.Song)
             .FirstOrDefaultAsync(s => s.Id == sessionId);
 
-        if (session == null) return NotFound();
+        if (session == null)
+            return NotFound();
 
-        return Ok(session);
+        if (role != "Admin" && session.UserId != userId)
+            return Forbid();
+
+        return Ok(new
+        {
+            session.Id,
+            session.Name,
+            session.CreatedAt,
+            Players = session.Players.Select(p => new
+            {
+                p.Id,
+                p.Nick,
+                p.TotalScore
+            }),
+            Queue = session.Queue
+                .OrderBy(q => q.Position)
+                .Select(q => new
+                {
+                    q.Id,
+                    q.Position,
+                    Song = new
+                    {
+                        q.Song.Id,
+                        q.Song.Title,
+                        q.Song.Artist,
+                        q.Song.Language
+                    }
+                })
+        });
     }
+    
 }
-
-*/
