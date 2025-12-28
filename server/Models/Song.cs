@@ -12,5 +12,6 @@ public class Song
     public string AudioPath { get; set; } = "";
     public string VideoPath { get; set; } = "";
     public string CoverPath { get; set; } = "";
+    public string FolderName { get; set; } = "";
     public ICollection<SessionQueueItem> SessionQueueItems { get; set; } = new List<SessionQueueItem>();
 }

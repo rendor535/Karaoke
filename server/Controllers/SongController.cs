@@ -103,8 +103,7 @@ public class SongController : ControllerBase
             return BadRequest("Folder musi zawierać plik .mp3 oraz .txt");
         }
 
-        string Rel(string path) =>
-            "/files/" + request.FolderName + "/" + Path.GetFileName(path);
+        string FileName(string path) => Path.GetFileName(path);
         // zapis do bazy
 
         var meta = ParseSongTxt(txt);
@@ -126,15 +125,18 @@ public class SongController : ControllerBase
         // zapis do bazy
         var song = new Song
         {
+            FolderName = request.FolderName,
+
             Title = title,
             Artist = artist,
             Language = language,
             BPM = bpm,
             GAP = gap,
-            TxtPath = Rel(txt),
-            AudioPath = Rel(mp3),
-            CoverPath = cover != null ? Rel(cover) : "",
-            VideoPath = video != null ? Rel(video) : ""
+
+            TxtPath = Path.GetFileName(txt),
+            AudioPath = Path.GetFileName(mp3),
+            CoverPath = cover != null ? Path.GetFileName(cover) : "",
+            VideoPath = video != null ? Path.GetFileName(video) : ""
         };
 
         _db.Song.Add(song);
@@ -225,7 +227,8 @@ public class SongController : ControllerBase
                 s.TxtPath,
                 s.AudioPath,
                 s.VideoPath,
-                s.CoverPath
+                s.CoverPath,
+                s.FolderName
             })
             .FirstOrDefaultAsync();
 
@@ -234,7 +237,7 @@ public class SongController : ControllerBase
 
         return Ok(song);
     }
-
+    // raczej nie uzyje tego, bo zmiana jest ciezka, raczej samo ma sie ustawiac
     // PATCH /song/{id}
     // Admin / Superuser
     [Authorize(Roles = "Admin,Superuser")]

@@ -67,7 +67,8 @@ public static class DbSeeder
             TxtPath = " ABBA - Money Money Money.txt",
             AudioPath = "ABBA - Money Money Money.avi",
             VideoPath = "ABBA - Money Money Money.mp4",
-            CoverPath = "ABBA - Money Money Money [CO].jpg"
+            CoverPath = "ABBA - Money Money Money [CO].jpg",
+            FolderName = "ABBA - Money Money Money"
         };
 
         context.Song.Add(song);
