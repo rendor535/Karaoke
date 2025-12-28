@@ -140,7 +140,7 @@ public class SongController : ControllerBase
         _db.Song.Add(song);
         await _db.SaveChangesAsync();
 
-        return Ok(new
+        return Ok(new // TODO nadal zle ustawia path
         {
             song.Id,
             song.Title,
