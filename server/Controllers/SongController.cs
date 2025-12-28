@@ -1,9 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+
 using System.Security.Claims;
+using System.Globalization;
+
 using server.Data;
 using server.Models;
+using server.DTOs;
 using Swashbuckle.AspNetCore.Annotations;
 
 using System.IO.Compression;
@@ -15,26 +19,140 @@ namespace server.Controllers;
 public class SongController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
-
-    public SongController(ApplicationDbContext db)
+    private readonly string _filesRoot; 
+    public SongController(ApplicationDbContext db,  IConfiguration config) // na razie nie będzie to działało w dockerze, TODO zmienić na ścieżkę względną
     {
         _db = db;
+        _filesRoot = config["FilesRoot"]
+            ?? throw new Exception("FilesRoot not configured");
+    }
+    // parser do pliku .txt z nutami
+    private Dictionary<string, string> ParseSongTxt(string txtFilePath)
+    {
+        var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var line in System.IO.File.ReadLines(txtFilePath))
+        {
+            if (!line.StartsWith("#"))
+                break; // kończymy na pierwszej linii tekstu nut
+            var idx = line.IndexOf(':');
+            if (idx < 0)
+                continue;
+
+            var key = line.Substring(1, idx - 1).Trim();
+            var value = line[(idx + 1)..].Trim();
+
+            dict[key] = value;
+        }
+        return dict;
     }
 
-    // POST /song
+    // POST /song           
     // Admin / Superuser
     [Authorize(Roles = "Admin,Superuser")]
-    [HttpPost]
-    [SwaggerOperation(Summary = "Dodaj utwór")]
-    public async Task<IActionResult> Create([FromBody] Song song)
+    [HttpPost("upload-folder")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UploadFolder(
+        [FromForm] SongUploadZipRequest request
+    )
     {
-        if (string.IsNullOrWhiteSpace(song.Title))
-            return BadRequest("Title required");
+        if (string.IsNullOrWhiteSpace(request.FolderName))
+            return BadRequest("Brak nazwy folderu");
+
+        if (request.Zip == null || request.Zip.Length == 0)
+            return BadRequest("Brak pliku ZIP");
+
+        if (!request.Zip.FileName.EndsWith(".zip"))
+            return BadRequest("Plik musi być ZIP");
+
+        Directory.CreateDirectory(_filesRoot);
+
+        var songDir = Path.Combine(_filesRoot, request.FolderName);
+        Directory.CreateDirectory(songDir);
+
+        var zipPath = Path.Combine(songDir, "upload.zip");
+
+        // zapis ZIP
+        await using (var stream = new FileStream(zipPath, FileMode.Create))
+        {
+            await request.Zip.CopyToAsync(stream);
+        }
+
+        // rozpakowanie
+        ZipFile.ExtractToDirectory(zipPath, songDir, true);
+        System.IO.File.Delete(zipPath);
+
+        // wykrywanie plików
+        string? mp3 = null;
+        string? txt = null;
+        string? cover = null;
+        string? video = null;
+
+        foreach (var f in Directory.GetFiles(songDir))
+        {
+            var ext = Path.GetExtension(f).ToLowerInvariant();
+
+            if (ext == ".mp3") mp3 = f;
+            else if (ext == ".txt") txt = f;
+            else if (ext == ".jpg" || ext == ".png") cover = f;
+            else if (ext == ".mp4" || ext == ".avi") video = f;
+        }
+
+        if (mp3 == null || txt == null)
+        {
+            Directory.Delete(songDir, true);
+            return BadRequest("Folder musi zawierać plik .mp3 oraz .txt");
+        }
+
+        string Rel(string path) =>
+            "/files/" + request.FolderName + "/" + Path.GetFileName(path);
+        // zapis do bazy
+
+        var meta = ParseSongTxt(txt);
+
+        // minimum
+        var title = meta.GetValueOrDefault("TITLE");
+        var artist = meta.GetValueOrDefault("ARTIST");
+
+        if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(artist))
+        {
+            Directory.Delete(songDir, true);
+            return BadRequest("Plik TXT musi zawierać #TITLE i #ARTIST");
+        }
+
+        var language = meta.GetValueOrDefault("LANGUAGE") ?? "";
+        double.TryParse(meta.GetValueOrDefault("BPM"), NumberStyles.Any, CultureInfo.InvariantCulture, out var bpm);
+        double.TryParse(meta.GetValueOrDefault("GAP"), NumberStyles.Any, CultureInfo.InvariantCulture, out var gap);
+
+        // zapis do bazy
+        var song = new Song
+        {
+            Title = title,
+            Artist = artist,
+            Language = language,
+            BPM = bpm,
+            GAP = gap,
+            TxtPath = Rel(txt),
+            AudioPath = Rel(mp3),
+            CoverPath = cover != null ? Rel(cover) : "",
+            VideoPath = video != null ? Rel(video) : ""
+        };
 
         _db.Song.Add(song);
         await _db.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetById), new { id = song.Id }, song);
+        return Ok(new
+        {
+            song.Id,
+            song.Title,
+            song.Artist,
+            song.Language,
+            song.BPM,
+            song.GAP,
+            song.AudioPath,
+            song.TxtPath,
+            song.CoverPath,
+            song.VideoPath
+        });
     }
 
     // GET /song
@@ -170,4 +288,6 @@ public class SongController : ControllerBase
 
         return NoContent();
     }
+
+    
 }

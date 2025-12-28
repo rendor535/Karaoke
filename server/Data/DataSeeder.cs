@@ -61,9 +61,9 @@ public static class DbSeeder
         {
             Title = "Dancing Queen",
             Artist = "ABBA",
-            Language = "EN",
-            BPM = 100,
-            GAP = 0,
+            Language = "English",
+            BPM = 339.2,
+            GAP = 12116.75,
             TxtPath = " ABBA - Money Money Money.txt",
             AudioPath = "ABBA - Money Money Money.avi",
             VideoPath = "ABBA - Money Money Money.mp4",
