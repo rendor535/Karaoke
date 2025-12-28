@@ -221,47 +221,72 @@ public class SessionController : ControllerBase
         return NoContent();
     }
 
-    // get wszystkich sesji - admin
-    // GET /session  -> wszystkie sesje (tylko Admin)
+
+    // GET /session?page=1&pageSize=10
     [Authorize(Roles = "Admin")]
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10
+    )
     {
-        var sessions = await _db.Session
-            .OrderByDescending(s => s.CreatedAt)
-            .Select(s => new
-            {
-                s.Id,
-                s.Name,
-                s.CreatedAt,
-                Owner = new
-                {
-                    s.User.Id,
-                    s.User.Email
-                },
-                Players = s.Players.Select(p => new
-                {
-                    p.Id,
-                    p.Nick,
-                    p.TotalScore
-                }),
-                Queue = s.Queue
-                    .OrderBy(q => q.Position)
-                    .Select(q => new
-                    {
-                        q.Id,
-                        q.Position,
-                        Song = new
-                        {
-                            q.Song.Id,
-                            q.Song.Title,
-                            q.Song.Artist,
-                            q.Song.Language
-                        }
-                    })
-            })
-            .ToListAsync();
+    var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    var role = User.FindFirstValue(ClaimTypes.Role);
 
+    IQueryable<Session> query = _db.Session;
+
+    // USER/SUPERUSER - tylko swoje sesje
+    if (role != "Admin")
+    {
+        query = query.Where(s => s.UserId == userId);
+    }
+
+    // ADMIN - wszystkie sesje + paginacja
+    if (role == "Admin")
+    {
+        query = query
+            .OrderByDescending(s => s.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize);
+    }
+    else
+    {
+        query = query.OrderByDescending(s => s.CreatedAt);
+    }
+
+    var sessions = await query
+        .Select(s => new
+        {
+            s.Id,
+            s.Name,
+            s.CreatedAt,
+            Owner = new
+            {
+                s.User.Id,
+                s.User.Email
+            },
+            Players = s.Players.Select(p => new
+            {
+                p.Id,
+                p.Nick,
+                p.TotalScore
+            }),
+            Queue = s.Queue
+                .OrderBy(q => q.Position)
+                .Select(q => new
+                {
+                    q.Id,
+                    q.Position,
+                    Song = new
+                    {
+                        q.Song.Id,
+                        q.Song.Title,
+                        q.Song.Artist,
+                        q.Song.Language
+                    }
+                })
+        })
+        .ToListAsync();
         return Ok(sessions);
     }
 

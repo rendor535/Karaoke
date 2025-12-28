@@ -1,6 +1,7 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 console.log("API_URL =", API_URL);
 console.log("API_URL RUNTIME =", process.env.NEXT_PUBLIC_API_URL);
+
 export const api = {
   async login(email: string, password: string) {
     const res = await fetch(`http://localhost:5159/auth/login`, {
@@ -40,4 +41,23 @@ export const api = {
 
     return res.json();
   },
+
+  // pobierz dane zalogowanego użytkownika
+  async me() {
+    const res = await fetch(`${API_URL}/user/me`, {
+      credentials: "include",
+    });
+    return res.json();
+  },
+  
+  // pobierz sesje użytkownika
+  async getSessions() {
+    const res = await fetch(`${API_URL}/session?page=1&pageSize=50`, {
+      credentials: "include",
+    });
+    return res.json();
+  },
+
+
+
 };

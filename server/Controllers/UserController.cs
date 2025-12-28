@@ -75,6 +75,7 @@ public class UserController : ControllerBase
         return Ok(user);
     }
     */
+    // GET /user/me
     [Authorize]
     [HttpGet("me")]
     [SwaggerOperation(Summary = "Pobierz aktualnego użytkownika wraz z sesjami")]
@@ -127,7 +128,8 @@ public class UserController : ControllerBase
 
         return Ok(user);
     }
-
+    
+    // GET /user/{id}
     [Authorize]
     [HttpGet("{id}")]
     [SwaggerOperation(Summary = "Pobierz użytkownika po ID wraz z sesjami")]
