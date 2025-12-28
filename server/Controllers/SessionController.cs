@@ -220,4 +220,49 @@ public class SessionController : ControllerBase
 
         return NoContent();
     }
+
+    // get wszystkich sesji - admin
+    // GET /session  -> wszystkie sesje (tylko Admin)
+    [Authorize(Roles = "Admin")]
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var sessions = await _db.Session
+            .OrderByDescending(s => s.CreatedAt)
+            .Select(s => new
+            {
+                s.Id,
+                s.Name,
+                s.CreatedAt,
+                Owner = new
+                {
+                    s.User.Id,
+                    s.User.Email
+                },
+                Players = s.Players.Select(p => new
+                {
+                    p.Id,
+                    p.Nick,
+                    p.TotalScore
+                }),
+                Queue = s.Queue
+                    .OrderBy(q => q.Position)
+                    .Select(q => new
+                    {
+                        q.Id,
+                        q.Position,
+                        Song = new
+                        {
+                            q.Song.Id,
+                            q.Song.Title,
+                            q.Song.Artist,
+                            q.Song.Language
+                        }
+                    })
+            })
+            .ToListAsync();
+
+        return Ok(sessions);
+    }
+
 }
