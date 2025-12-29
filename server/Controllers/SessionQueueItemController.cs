@@ -26,6 +26,7 @@ public class SessionQueueItemController : ControllerBase
     }
 
     // POST — dodaj item do kolejki (alternatywa dla /session/{id}/add-song), nwm chyba do usuniiecia 
+    /*
     [HttpPost]
     public async Task<IActionResult> Create(int sessionId, int songId)
     {
@@ -57,7 +58,7 @@ public class SessionQueueItemController : ControllerBase
             item.Position
         });
     }
-
+    */
     // GET - jeden item
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(int id)

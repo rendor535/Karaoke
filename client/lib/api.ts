@@ -4,7 +4,7 @@ console.log("API_URL RUNTIME =", process.env.NEXT_PUBLIC_API_URL);
 
 export const api = {
   async login(email: string, password: string) {
-    const res = await fetch(`http://localhost:5159/auth/login`, {
+    const res = await fetch(`${API_URL}/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -52,12 +52,15 @@ export const api = {
   },
   
   // pobierz sesje użytkownika
-  async getSessions() {
-    const res = await fetch(`${API_URL}/session?page=1&pageSize=50`, {
-      credentials: "include",
-    });
+  async getSessions(page = 1, pageSize = 50) {
+    const res = await fetch(
+      `${API_URL}/session?page=${page}&pageSize=${pageSize}`,
+      { credentials: "include" }
+    );
+    if (!res.ok) throw new Error("Failed to load sessions");
     return res.json();
   },
+
 
   async getSongs(params: {
     q?: string;
@@ -93,4 +96,46 @@ export const api = {
       throw new Error(text);
     }
   },
+
+  async addSongToSession(sessionId: number, songId: number) {
+    const res = await fetch(
+      `${API_URL}/session/${sessionId}/add-song`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(songId),
+      }
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text);
+    }
+  },
+
+  async activateSession(id: number) {
+    const res = await fetch(`${API_URL}/session/${id}/activate`, {
+      method: "POST",
+      credentials: "include",
+    });
+    if (!res.ok) throw new Error("Activate failed");
+  },
+
+  async deleteSession(id: number) {
+    const res = await fetch(`${API_URL}/session/${id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!res.ok) throw new Error("Delete failed");
+  },
+
+  async getSession(id: number) {
+    const res = await fetch(`${API_URL}/session/${id}`, {
+      credentials: "include",
+    });
+    if (!res.ok) throw new Error("Get session failed");
+    return res.json();
+  }
+
 };

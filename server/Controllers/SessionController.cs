@@ -33,13 +33,60 @@ public class SessionController : ControllerBase
                 : request.Name.Trim(),
 
             UserId = userId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            IsActive = false
         };
 
         _db.Session.Add(session);
         await _db.SaveChangesAsync();
 
         return Ok(session);
+    }
+
+    [Authorize]
+    [HttpPost("{id}/activate")]
+    public async Task<IActionResult> ActivateSession(int id)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var role = User.FindFirstValue(ClaimTypes.Role);
+
+        var session = await _db.Session.FindAsync(id);
+        if (session == null)
+            return NotFound();
+
+        if (role != "Admin" && session.UserId != userId)
+            return Forbid();
+
+        if (!session.IsActive)
+        {
+            session.IsActive = true;
+            session.StartedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+        }
+
+        return Ok();
+    }
+
+    [Authorize]
+    [HttpPost("{id}/disable")]
+    public async Task<IActionResult> DisableSession(int id)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var role = User.FindFirstValue(ClaimTypes.Role);
+
+        var session = await _db.Session.FindAsync(id);
+        if (session == null)
+            return NotFound();
+
+        if (role != "Admin" && session.UserId != userId)
+            return Forbid();
+
+        if (session.IsActive)
+        {
+            session.IsActive = false;
+            await _db.SaveChangesAsync();
+        }
+        return Ok();
     }
 
     // Dodaj gracza (nick)
@@ -140,6 +187,8 @@ public class SessionController : ControllerBase
             session.Id,
             session.Name,
             session.CreatedAt,
+            session.StartedAt,
+            session.IsActive,
             Players = session.Players.Select(p => new
             {
                 p.Id,
@@ -163,7 +212,7 @@ public class SessionController : ControllerBase
         });
     }
 
-    // update session name
+    // update session name, nw czy bedzie uzywane
     [Authorize]
     [HttpPatch("{sessionId}")]
     public async Task<IActionResult> Update(int sessionId, [FromBody] CreateSessionRequest request)
@@ -260,11 +309,14 @@ public class SessionController : ControllerBase
             s.Id,
             s.Name,
             s.CreatedAt,
+            s.IsActive,
             Owner = new
             {
                 s.User.Id,
                 s.User.Email
             },
+            PlayersCount = s.Players.Count(),
+            SongsCount = s.Queue.Count(),
             Players = s.Players.Select(p => new
             {
                 p.Id,
@@ -284,8 +336,8 @@ public class SessionController : ControllerBase
                         q.Song.Artist,
                         q.Song.Language
                     }
-                })
-        })
+                }),
+            })
         .ToListAsync();
         return Ok(sessions);
     }

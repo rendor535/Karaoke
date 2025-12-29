@@ -11,4 +11,4 @@ public class SessionQueueItem
 
     public int Position { get; set; }  // 1,2,3 itd. kolejność
     public DateTime AddedAt { get; set; } = DateTime.UtcNow;
-}
+}   

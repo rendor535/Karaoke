@@ -13,6 +13,14 @@ type Song = {
   folderName: string;
 };
 
+type Session = {
+  id: number;
+  name: string;
+  createdAt: string;
+  playersCount: number;
+  songsCount: number;
+};
+
 export default function SongsPage() {
   const router = useRouter();
 
@@ -24,6 +32,10 @@ export default function SongsPage() {
   const [loading, setLoading] = useState(false);
 
   const [modalSongId, setModalSongId] = useState<number | null>(null);
+
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [selectedSessions, setSelectedSessions] = useState<Set<number>>(new Set());
+  const [modalLoading, setModalLoading] = useState(false);
 
   useEffect(() => {
     load();
@@ -64,6 +76,14 @@ export default function SongsPage() {
     await load();
   }
 
+  async function openAddToSessionModal(songId: number) {
+    setModalSongId(songId);
+    setSelectedSessions(new Set());
+
+    const data = await api.getSessions();
+    setSessions(data);
+  }
+  
   return (
     <div>
       <h1>Utwory</h1>
@@ -147,9 +167,9 @@ export default function SongsPage() {
 
             {/* AKCJE */}
             <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => setModalSongId(s.id)}>
-                Dodaj do sesji
-              </button>
+                <button onClick={() => openAddToSessionModal(s.id)}>
+                    Dodaj do sesji
+                </button>
 
               {(role === "Admin" || role === "Superuser") && (
                 <button onClick={() => removeSong(s.id)}>
@@ -161,38 +181,76 @@ export default function SongsPage() {
         ))}
       </div>
 
-      {/* MODAL – UI ONLY */}
-      {modalSongId !== null && (
+        {/* MODAL */}
+        {modalSongId !== null && (
         <div
-          style={{
+            style={{
             position: "fixed",
             inset: 0,
             background: "rgba(0,0,0,0.5)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-          }}
-        >
-          <div
-            style={{
-              background: "white",
-              padding: 30,
-              minWidth: 300,
+            zIndex: 1000,
             }}
-          >
-            <p>skibidi toaleta</p>
+        >
+            <div style={{ background: "white", padding: 20, minWidth: 500 }}>
+            <h3>Dodaj utwór do sesji</h3>
 
-            <div style={{ marginTop: 20 }}>
-              <button onClick={() => setModalSongId(null)}>
-                Anuluj
-              </button>
-              <button onClick={() => setModalSongId(null)}>
-                Zatwierdź
-              </button>
+            <div>
+                {sessions.map((s) => (
+                <div
+                    key={s.id}
+                    style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    borderBottom: "1px solid #ccc",
+                    padding: 6,
+                    }}
+                >
+                    <input type="checkbox" checked={selectedSessions.has(s.id)} onChange={() => {
+                        setSelectedSessions((prev) => {
+                        const next = new Set(prev);
+                        next.has(s.id) ? next.delete(s.id) : next.add(s.id);
+                        return next;
+                        });
+                    }}
+                    />
+                    <div style={{ width: 180 }}>{s.name}</div>
+                    <div style={{ width: 80 }}>{s.songsCount} utw.</div>
+                    <div style={{ width: 80 }}>{s.playersCount} gr.</div>
+                    <div>
+                    {new Date(s.createdAt).toLocaleDateString()}
+                    </div>
+                </div>
+                ))}
             </div>
-          </div>
+
+            <div style={{ marginTop: 20, display: "flex", gap: 10 }}>
+                <button onClick={() => setModalSongId(null)}>
+                Anuluj
+                </button>
+
+                <button disabled={selectedSessions.size === 0 || modalLoading} onClick={async () => {
+                    if (!modalSongId) return;
+
+                    setModalLoading(true);
+
+                    for (const sessionId of selectedSessions) {
+                        await api.addSongToSession(sessionId, modalSongId);
+                    }
+
+                    setModalLoading(false);
+                    setModalSongId(null);
+                }}
+                >
+                Zatwierdź
+                </button>
+            </div>
+            </div>
         </div>
-      )}
+        )}
     </div>
   );
 }

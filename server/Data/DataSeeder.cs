@@ -78,7 +78,9 @@ public static class DbSeeder
         var session = new Session
         {
             Name = "Test Session",
-            UserId = superuser.Id
+            UserId = superuser.Id,
+            IsActive = false,
+            CreatedAt = DateTime.UtcNow
         };
 
         context.Session.Add(session);
@@ -109,7 +111,7 @@ public static class DbSeeder
             SongId = song.Id,
             Position = 1
         };
-
+        
         context.SessionQueueItem.Add(queueItem);
         context.SaveChanges();
     }
