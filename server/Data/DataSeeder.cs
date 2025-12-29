@@ -1,5 +1,6 @@
 using server.Models;
 using server.Data;
+using System.ComponentModel.Design.Serialization;
 
 namespace server.Data;
 
@@ -57,7 +58,7 @@ public static class DbSeeder
         context.SaveChanges();
 
         // ===== SONG =====
-        var song = new Song
+        var song1 = new Song
         {
             Title = "Money Money Money",
             Artist = "ABBA",
@@ -65,13 +66,26 @@ public static class DbSeeder
             BPM = 339.2,
             GAP = 12116.75,
             TxtPath = " ABBA - Money Money Money.txt",
-            AudioPath = "ABBA - Money Money Money.avi",
-            VideoPath = "ABBA - Money Money Money.mp4",
+            AudioPath = "ABBA - Money Money Money.mp3",
+            VideoPath = "ABBA - Money Money Money.avi",
             CoverPath = "ABBA - Money Money Money [CO].jpg",
             FolderName = "ABBA - Money Money Money"
         };
+        var song2 = new Song
+        {
+            Title = "La Bella y la Bestia - Gastón (reprise)",
+            Artist = "Disney",
+            Language = "Spanish",
+            BPM = 400.0,
+            GAP = 2680.0,
+            TxtPath = " La Bella y la Bestia - Gastón (reprise).txt",
+            AudioPath = "La Bella y la Bestia - Gastón (reprise).mp3",
+            VideoPath = "La Bella y la Bestia - Gastón (reprise).mp4",
+            CoverPath = "La Bel;la y la Bestia - Gastón (reprise).jpg",
+        };
 
-        context.Song.Add(song);
+        context.Song.Add(song1);
+        context.Song.Add(song2);
         context.SaveChanges();
 
         // ===== SESSION =====
@@ -105,14 +119,22 @@ public static class DbSeeder
         context.SaveChanges();
 
         // ===== QUEUE =====
-        var queueItem = new SessionQueueItem
+        var queueItem1 = new SessionQueueItem
         {
             SessionId = session.Id,
-            SongId = song.Id,
+            SongId = song1.Id,
             Position = 1
         };
-        
-        context.SessionQueueItem.Add(queueItem);
+
+        var queueItem2 = new SessionQueueItem
+        {
+            SessionId = session.Id,
+            SongId = song2.Id,
+            Position = 2
+        };
+
+        context.SessionQueueItem.Add(queueItem1);
+        context.SessionQueueItem.Add(queueItem2);
         context.SaveChanges();
     }
 }

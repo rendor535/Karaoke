@@ -19,17 +19,17 @@ type EditSession = {
   id: number;
   name: string;
   isActive: boolean;
-  Queue: {
+  queue: {
     id: number;
     position: number;
-    Song: {
+    song: {
       id: number;
       title: string;
       artist: string;
       language: string;
     };
   }[];
-  Players: {
+  players: {
     id: number;
     nick: string;
     totalScore: number;
@@ -46,6 +46,8 @@ export default function SessionsPage() {
   const [editSessionId, setEditSessionId] = useState<number | null>(null);
   const [editSession, setEditSession] = useState<EditSession | null>(null);
   const [editLoading, setEditLoading] = useState(false);
+  const [selectedQueueItemId, setSelectedQueueItemId] = useState<number | null>(null);
+
   useEffect(() => {
     load();
   }, []);
@@ -87,9 +89,14 @@ export default function SessionsPage() {
   async function openEditSession(id: number) {
     setEditSessionId(id);
     setEditLoading(true);
+    // setSelectedQueueItemId(null);
 
     const data = await api.getSession(id);
-    setEditSession(data);
+    setEditSession({
+      ...data,
+      queue: data.queue ?? [],
+      players: data.players ?? [],
+    });
 
     setEditLoading(false);
   }
@@ -181,24 +188,124 @@ export default function SessionsPage() {
               gap: 20,
             }}
           >
-            {/* LEWA – KOLEJKA */}
-            <div style={{ flex: 1 }}>
-              <h3>Kolejka</h3>
-              {/* tutaj lista Queue + strzałki góra/dół */}
-            </div>
+          {/* LEWA – KOLEJKA */}
+          <div style={{ flex: 1 }}>
+            <h3>Kolejka</h3>
+            <button
+              disabled={!selectedQueueItemId}
+              onClick={async () => {
+                if (selectedQueueItemId === null) return;
+                await api.moveQueueItem(selectedQueueItemId, "up");
+                await openEditSession(editSession.id);
+              }}
+            >
+              ⬆️
+            </button>
 
-            {/* PRAWA – GRACZE */}
-            <div style={{ flex: 1 }}>
-              <h3>Gracze</h3>
-              {/* tutaj Players + Dodaj / Usuń */}
-            </div>
+            <button
+              disabled={!selectedQueueItemId}
+              onClick={async () => {
+                if (selectedQueueItemId === null) return;
+                await api.moveQueueItem(selectedQueueItemId, "down");
+                await openEditSession(editSession.id);
+              }}
+            >
+              ⬇️
+            </button>
 
+            {editSession.queue.length === 0 && (
+              <p>Brak piosenek</p>
+            )}
+
+            {editSession.queue.map((q) => (
+              <div
+                key={q.id}
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  borderBottom: "1px solid #ccc",
+                  padding: 6,
+                }}
+              >
+              <input
+                type="radio"
+                name="queueSelect"
+                checked={selectedQueueItemId === q.id}
+                onChange={() => setSelectedQueueItemId(q.id)}
+              />
+
+              <div style={{ width: 200 }}>
+                {q.song.title}
+              </div>
+
+              <div style={{ width: 200 }}>
+                {q.song.artist}
+              </div>
+
+              <button
+                onClick={() => {
+                  if (!confirm("Usunąć piosenkę z kolejki?")) return;
+                  api.deleteQueueItem(q.id).then(() => openEditSession(editSession.id));
+                }}
+              >
+                  Usuń
+              </button>
+              </div>
+            ))}
+          </div>
+
+
+          {/* PRAWA – GRACZE */}
+          <div style={{ flex: 1 }}>
+            <h3>Gracze</h3>
+            {editSession.players.length === 0 && (
+              <p>Brak graczy</p>
+            )}
+
+            {editSession.players.map((p) => (
+              <div
+                key={p.id}
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  borderBottom: "1px solid #ccc",
+                  padding: 6,
+                }}
+              >
+                <div style={{ width: 200 }}>{p.nick}</div>
+                <div style={{ width: 100 }}>{p.totalScore}</div>
+
+                <button
+                  onClick={() => {
+                    if (!confirm("Usunąć gracza?")) return;
+                    api.deleteSessionPlayer(p.id).then(() => openEditSession(editSession.id));
+                  }}
+                >
+                  Usuń
+                </button>
+              </div>
+            ))}
+
+            <button
+              onClick={async () => {
+                const nick = prompt("Nick gracza");
+                if (!nick) return;
+                await api.addPlayer(editSession.id, nick);
+                await openEditSession(editSession.id);
+              }}
+            >
+              Dodaj gracza
+            </button>
+            
             {/* DÓŁ */}
-            <div style={{ position: "absolute", bottom: 20, right: 20 }}>
+            <div style={{ bottom: 20, right: 20 }}>
               <button onClick={() => setEditSessionId(null)}>
                 OK
               </button>
             </div>
+          </div>
+
+
           </div>
         </div>
       )}

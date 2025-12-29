@@ -90,6 +90,7 @@ public class SessionQueueItemController : ControllerBase
     }
 
     // PATCH - zmiana pozycji (np. reorder)
+    /*
     [HttpPatch("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateQueueItemRequest request)
     {
@@ -113,6 +114,47 @@ public class SessionQueueItemController : ControllerBase
             item.Id,
             item.Position
         });
+    }
+    */
+    // POST /sessionQueueItem/{id}/move
+    [HttpPost("{id}/move")]
+    public async Task<IActionResult> Move(int id, [FromBody] string direction)
+    {
+        var item = await _db.SessionQueueItem
+            .Include(q => q.Session)
+            .FirstOrDefaultAsync(q => q.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        if (!HasAccess(item.Session))
+            return Forbid();
+
+        if (direction != "up" && direction != "down")
+            return BadRequest();
+
+        var targetPosition = direction == "up"
+            ? item.Position - 1
+            : item.Position + 1;
+
+        if (targetPosition < 1)
+            return Ok(); // już na górze
+
+        var swapItem = await _db.SessionQueueItem
+            .FirstOrDefaultAsync(q =>
+                q.SessionId == item.SessionId &&
+                q.Position == targetPosition);
+
+        if (swapItem == null)
+            return Ok(); // już na dole
+
+        // swap
+        swapItem.Position = item.Position;
+        item.Position = targetPosition;
+
+        await _db.SaveChangesAsync();
+
+        return Ok();
     }
 
     // DELETE - usuń item z kolejki

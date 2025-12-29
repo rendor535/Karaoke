@@ -136,6 +136,52 @@ export const api = {
     });
     if (!res.ok) throw new Error("Get session failed");
     return res.json();
+  },
+
+  async deleteQueueItem(id: number) {
+    const res = await fetch(`${API_URL}/sessionQueueItem/${id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!res.ok) throw new Error("Delete queue item failed");
+  },
+
+  async addPlayer(sessionId: number, nick: string) {
+    const res = await fetch(
+      `${API_URL}/session/${sessionId}/add-player`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(nick),
+      }
+    );
+    if (!res.ok) throw new Error("Add player failed");
+  },
+
+  async deleteSessionPlayer(id: number) {
+    const res = await fetch(`${API_URL}/sessionPlayer/${id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!res.ok) throw new Error("Delete player failed");
+  },
+
+  async moveQueueItem(id: number, direction: "up" | "down") {
+  const res = await fetch(
+    `${API_URL}/session-queue-item/${id}/move`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(direction),
+    }
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text);
   }
+},
 
 };
