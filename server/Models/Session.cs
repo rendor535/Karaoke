@@ -9,4 +9,4 @@ public class Session
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public ICollection<SessionQueueItem> Queue { get; set; } = new List<SessionQueueItem>();
     public ICollection<SessionPlayer> Players { get; set; } = new List<SessionPlayer>();
-}
+} 

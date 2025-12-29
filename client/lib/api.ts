@@ -47,6 +47,7 @@ export const api = {
     const res = await fetch(`${API_URL}/user/me`, {
       credentials: "include",
     });
+    if (!res.ok) throw new Error("Unauthorized");
     return res.json();
   },
   
@@ -58,6 +59,38 @@ export const api = {
     return res.json();
   },
 
+  async getSongs(params: {
+    q?: string;
+    searchBy?: "all" | "title" | "artist";
+    language?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const query = new URLSearchParams();
 
+    if (params.q) query.append("q", params.q);
+    if (params.searchBy) query.append("searchBy", params.searchBy);
+    if (params.language) query.append("language", params.language);
+    if (params.page) query.append("page", String(params.page));
+    if (params.limit) query.append("limit", String(params.limit));
 
+    const res = await fetch(`${API_URL}/song?${query.toString()}`, {
+      credentials: "include",
+    });
+
+    if (!res.ok) throw new Error("Failed to fetch songs");
+    return res.json(); // { data, page, limit, total, totalPages }
+  },
+
+  async deleteSong(id: number) {
+    const res = await fetch(`${API_URL}/song/${id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text);
+    }
+  },
 };

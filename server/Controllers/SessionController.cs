@@ -223,7 +223,7 @@ public class SessionController : ControllerBase
 
 
     // GET /session?page=1&pageSize=10
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetAll(
         [FromQuery] int page = 1,

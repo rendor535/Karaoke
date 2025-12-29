@@ -25,7 +25,7 @@ public class SessionQueueItemController : ControllerBase
         return IsAdmin || session.UserId == UserId;
     }
 
-    // POST — dodaj item do kolejki (alternatywa dla /session/{id}/add-song)
+    // POST — dodaj item do kolejki (alternatywa dla /session/{id}/add-song), nwm chyba do usuniiecia 
     [HttpPost]
     public async Task<IActionResult> Create(int sessionId, int songId)
     {

@@ -164,6 +164,7 @@ public class SongController : ControllerBase
     public async Task<IActionResult> GetAll(
         [FromQuery] string? q,
         [FromQuery] string? language,
+        [FromQuery] string? searchBy = "all", // all | title | artist
         [FromQuery] int page = 1,
         [FromQuery] int limit = 20)
     {
@@ -173,12 +174,29 @@ public class SongController : ControllerBase
         var query = _db.Song.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(q))
-            query = query.Where(s =>
-                s.Title.ToLower().Contains(q.ToLower()) ||
-                s.Artist.ToLower().Contains(q.ToLower()));
+        {
+            q = q.Trim();
+
+            switch (searchBy?.ToLower())
+            {
+                case "title":
+                    query = query.Where(s =>
+                        EF.Functions.ILike(s.Title, $"%{q}%"));
+                    break;
+                case "artist":
+                    query = query.Where(s =>
+                        EF.Functions.ILike(s.Artist, $"%{q}%"));
+                    break;
+                default: 
+                    query = query.Where(s =>
+                        EF.Functions.ILike(s.Title, $"%{q}%") ||
+                        EF.Functions.ILike(s.Artist, $"%{q}%"));
+                    break;
+            }
+        }
 
         if (!string.IsNullOrWhiteSpace(language))
-            query = query.Where(s => s.Language == language);
+            query = query.Where(s => EF.Functions.ILike(s.Language, $"%{language}%"));
 
         var total = await query.CountAsync();
 
@@ -194,7 +212,8 @@ public class SongController : ControllerBase
                 s.Language,
                 s.BPM,
                 s.GAP,
-                s.CoverPath
+                s.CoverPath,
+                s.FolderName
             })
             .ToListAsync();
 
@@ -277,7 +296,7 @@ public class SongController : ControllerBase
 
     // DELETE /song/{id}
     // Admin only
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin, Superuser")]
     [HttpDelete("{id}")]
     [SwaggerOperation(Summary = "Usuń utwór")]
     public async Task<IActionResult> Delete(int id)
@@ -286,6 +305,23 @@ public class SongController : ControllerBase
         if (song == null)
             return NotFound();
 
+        if (!string.IsNullOrWhiteSpace(song.FolderName))
+        {
+            var songDir = Path.Combine(_filesRoot, song.FolderName);
+
+            if (Directory.Exists(songDir))
+            {
+                try
+                {
+                    Directory.Delete(songDir, recursive: true);
+                }
+                catch (Exception ex)
+                {
+                    // return StatusCode(500, $"Błąd usuwania plików: {ex.Message}");
+                    Console.WriteLine($"[WARN] Nie udało się usunąć folderu {songDir}: {ex.Message}");
+                }
+            }
+        }
         _db.Song.Remove(song);
         await _db.SaveChangesAsync();
 

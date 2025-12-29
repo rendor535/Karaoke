@@ -59,7 +59,7 @@ public static class DbSeeder
         // ===== SONG =====
         var song = new Song
         {
-            Title = "Dancing Queen",
+            Title = "Money Money Money",
             Artist = "ABBA",
             Language = "English",
             BPM = 339.2,
