@@ -103,9 +103,6 @@ public class SongController : ControllerBase
             return BadRequest("Folder musi zawierać plik .mp3 oraz .txt");
         }
 
-        string FileName(string path) => Path.GetFileName(path);
-        // zapis do bazy
-
         var meta = ParseSongTxt(txt);
 
         // minimum

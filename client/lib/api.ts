@@ -238,4 +238,13 @@ export const api = {
     }
   },
 
+  async getQueueItem(id: number) {
+    const res = await fetch(
+      `${API_URL}/session-queue-item/${id}`,
+      { credentials: "include" }
+    );
+    if (!res.ok) throw new Error("Failed to load queue item");
+    return res.json();
+  }
+
 };

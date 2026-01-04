@@ -206,7 +206,9 @@ public class SessionController : ControllerBase
                         q.Song.Id,
                         q.Song.Title,
                         q.Song.Artist,
-                        q.Song.Language
+                        q.Song.Language,
+                        q.Song.CoverPath,
+                        q.Song.FolderName
                     }
                 })
         });

@@ -82,10 +82,42 @@ public static class DbSeeder
             AudioPath = "La Bella y la Bestia - Gastón (reprise).mp3",
             VideoPath = "La Bella y la Bestia - Gastón (reprise).mp4",
             CoverPath = "La Bel;la y la Bestia - Gastón (reprise).jpg",
+            FolderName = "La Bella y la Bestia - Gastón (reprise)"
         };
+
+        var song3 = new Song
+        {
+            Title = "Linkin Park - Numb",
+            Artist = "Disney",
+            Language = "Spanish",
+            BPM = 220.1,
+            GAP = 22000.0,
+            TxtPath = "Linkin Park - Numb.txt",
+            AudioPath = "Linkin Park - Numb.mp3",
+            VideoPath = "Linkin Park - Numb.avi",
+            CoverPath = "Linkin Park - Numb.jpg",
+            FolderName = "Linkin Park - Numb"
+        };
+
+        var song4 = new Song
+        {
+            Title = "Katy Perry - Hot N Cold",
+            Artist = "Disney",
+            Language = "Spanish",
+            BPM = 264.0,
+            GAP = 4100.0,
+            TxtPath = "Katy Perry - Hot N Cold.txt",
+            AudioPath = "Katy Perry - Hot N Cold.mp3",
+            VideoPath = "Katy Perry - Hot N Cold.avi",
+            CoverPath = "Katy Perry - Hot N Cold.jpg",
+            FolderName = "Katy Perry - Hot N Cold"
+        };
+
 
         context.Song.Add(song1);
         context.Song.Add(song2);
+        context.Song.Add(song3);
+        context.Song.Add(song4);
         context.SaveChanges();
 
         // ===== SESSION =====
@@ -133,8 +165,16 @@ public static class DbSeeder
             Position = 2
         };
 
+        var queueItem3 = new SessionQueueItem
+        {
+            SessionId = session.Id,
+            SongId = song4.Id,
+            Position = 3
+        };
+
         context.SessionQueueItem.Add(queueItem1);
         context.SessionQueueItem.Add(queueItem2);
+        context.SessionQueueItem.Add(queueItem3);
         context.SaveChanges();
     }
 }

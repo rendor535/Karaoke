@@ -81,10 +81,17 @@ public class SessionQueueItemController : ControllerBase
             item.AddedAt,
             Song = new
             {
-                item.Song.Id,
-                item.Song.Title,
-                item.Song.Artist,
-                item.Song.Language
+                id = item.Song.Id,
+                title = item.Song.Title,
+                artist = item.Song.Artist,
+                language = item.Song.Language,
+                bpm = item.Song.BPM,
+                gap = item.Song.GAP,
+                coverPath = item.Song.CoverPath,
+                folderName = item.Song.FolderName,
+                audioPath = item.Song.AudioPath,
+                txtPath = item.Song.TxtPath,
+                videoPath = item.Song.VideoPath,
             }
         });
     }

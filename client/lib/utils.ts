@@ -8,7 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 }
  
 const axiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://localhost:7205/',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5159/',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
