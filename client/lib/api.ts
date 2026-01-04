@@ -168,20 +168,74 @@ export const api = {
   },
 
   async moveQueueItem(id: number, direction: "up" | "down") {
-  const res = await fetch(
-    `${API_URL}/session-queue-item/${id}/move`,
-    {
+    const res = await fetch(
+      `${API_URL}/session-queue-item/${id}/move`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(direction),
+      }
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text);
+    }
+  },
+
+  async createSession(name: string) {
+    const res = await fetch(`${API_URL}/session`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify(direction),
+      body: JSON.stringify({ name }),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text);
     }
-  );
+    return res.json();
+  },
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text);
-  }
-},
+  async updateSessionName(id: number, name: string) {
+    const res = await fetch(`${API_URL}/session/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ name }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text);
+    }
+
+    return res.json();
+  },
+
+  async getActiveSessions() {
+    const res = await fetch(`${API_URL}/session/active`, {
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text);
+    }
+
+    return res.json();
+  },
+
+  async disableSession(id: number) {
+    const res = await fetch(`${API_URL}/session/${id}/disable`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text);
+    }
+  },
 
 };

@@ -342,4 +342,42 @@ public class SessionController : ControllerBase
         return Ok(sessions);
     }
 
+    // GET /session/active
+    // Lista aktywnych sesji karaoke (LIVE)
+    [Authorize]
+    [HttpGet("active")]
+    public async Task<IActionResult> GetActiveSessions()
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var role = User.FindFirstValue(ClaimTypes.Role);
+
+        IQueryable<Session> query = _db.Session
+            .Where(s => s.IsActive);
+
+        if (role != "Admin")
+        {
+            query = query.Where(s => s.UserId == userId);
+        }
+
+        var sessions = await query
+            .OrderByDescending(s => s.StartedAt ?? s.CreatedAt)
+            .Select(s => new
+            {
+                s.Id,
+                s.Name,
+                s.CreatedAt,
+                s.StartedAt,
+                Owner = new
+                {
+                    s.User.Id,
+                    s.User.Email
+                },
+                PlayersCount = s.Players.Count(),
+                SongsCount = s.Queue.Count()
+            })
+            .ToListAsync();
+
+        return Ok(sessions);
+    }
+
 }

@@ -100,6 +100,23 @@ export default function SessionsPage() {
 
     setEditLoading(false);
   }
+  async function AddSession() {
+    const name = prompt("Nazwa sesji");
+    if (!name) return;
+
+    await api.createSession(name);
+    await load();
+  }
+
+  async function changeName() {
+    if (editSessionId === null) return;
+    const newName = prompt("Nowa nazwa sesji");
+    if (!newName) return;
+    await api.updateSessionName(editSessionId, newName);
+    await openEditSession(editSessionId);
+    await load();
+  }
+
 
   const visible = filterSessions();
 
@@ -123,6 +140,7 @@ export default function SessionsPage() {
             <option value="user">Użytkownik</option>
             <option value="name">Nazwa</option>
           </select>
+          <button onClick={() => {AddSession()}}>Dodaj Sesje</button>
         </div>
       )}
 
@@ -212,6 +230,7 @@ export default function SessionsPage() {
             >
               ⬇️
             </button>
+            <button onClick ={() => {changeName()}}>Zmień Nazwe</button>
 
             {editSession.queue.length === 0 && (
               <p>Brak piosenek</p>
@@ -241,7 +260,6 @@ export default function SessionsPage() {
               <div style={{ width: 200 }}>
                 {q.song.artist}
               </div>
-
               <button
                 onClick={() => {
                   if (!confirm("Usunąć piosenkę z kolejki?")) return;
