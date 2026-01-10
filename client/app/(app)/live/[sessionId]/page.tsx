@@ -52,6 +52,23 @@ type LyricLine = {
   words: LyricWord[];
 };
 
+type Note = {
+  startMs: number;
+  durationMs: number;
+  pitch: number;
+};
+
+// spłaszczanie linijek do nutek
+function flattenNotes(lines: LyricLine[]): Note[] {
+  return lines.flatMap(line =>
+    line.words.map(w => ({
+      startMs: w.startMs,
+      durationMs: w.durationMs,
+    }))
+  );
+}
+
+
 export default function LivePage() {
   const { sessionId } = useParams();
   const id = Number(sessionId);
@@ -72,6 +89,11 @@ export default function LivePage() {
   const [duration, setDuration] = useState(0);
   const [lyrics, setLyrics] = useState<LyricLine[]>([]);
   const [currentLine, setCurrentLine] = useState<LyricLine | null>(null);
+  const [notes, setNotes] = useState<Note[]>([]);
+
+  const rafRef = useRef<number | null>(null);
+
+  const VIEW_MS = 4000; // 4 sekundy do przodum, do nutek
 
   useEffect(() => {
     load();
@@ -123,6 +145,27 @@ export default function LivePage() {
     return () => document.removeEventListener("fullscreenchange", onFsChange);
   }, []);
 
+  // 60fps tick podczas grania
+  useEffect(() => {
+    if (state !== "playing") return;
+
+    const tick = () => {
+      if (audioRef.current) {
+        setCurrentTime(audioRef.current.currentTime);
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, [state]);
+
   async function load() { 
     const data = await api.getSession(id);
     setSession({
@@ -166,6 +209,7 @@ export default function LivePage() {
 
         const txt = await res.text();
         const parsedLyrics = parseUltraStarWords(txt);
+        setNotes(flattenNotes(parsedLyrics));
         console.log("📝 Załadowano lyrics:", parsedLyrics.length, "linijek");
         setLyrics(parsedLyrics);
       } catch (err) {
@@ -408,6 +452,99 @@ export default function LivePage() {
     );
   }
 
+  function pitchToY(
+    pitch: number,
+    minPitch: number,
+    maxPitch: number,
+    height: number
+  ) {
+    if (minPitch === maxPitch) return height / 2;
+
+    const t = (pitch - minPitch) / (maxPitch - minPitch);
+    return height - t * height;
+  }
+
+  function NotesTimeline({
+    notes,
+    currentMs,
+  }: {
+    notes: Note[];
+    currentMs: number;
+  }) {
+    const VIEW_MS = 5000;        // ile ms do przodu
+    const PX_PER_MS = 0.12;      // skala czasu
+    const NOW_PERCENT = 0.2;    // 20%
+
+    return (
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          height: 56,
+          background: "rgba(255,255,255,0.08)",
+          borderRadius: 12,
+          overflow: "hidden",
+          marginBottom: 12,
+        }}
+      >
+        {/* LINIA TERAZ */}
+        <div
+          style={{
+            position: "absolute",
+            left: "20%",
+            top: 0,
+            bottom: 0,
+            width: 2,
+            background: "rgba(255,255,255,0.35)",
+          }}
+        />
+
+        {notes.map((n, i) => {
+          const leftMs = n.startMs - currentMs;
+          const widthMs = n.durationMs;
+
+          // poza oknem widoku
+          if (leftMs > VIEW_MS || leftMs + widthMs < -VIEW_MS * 0.2) {
+            return null;
+          }
+
+          const isActive =
+            currentMs >= n.startMs &&
+            currentMs <= n.startMs + n.durationMs;
+
+          return (
+            <div
+              key={i}
+              style={{
+                position: "absolute",
+                left: `calc(20% + ${leftMs * PX_PER_MS}px)`,
+                top: 18,
+                width: Math.max(4, widthMs * PX_PER_MS),
+                height: 20,
+                borderRadius: 6,
+                background: isActive
+                  ? "rgba(255,215,79,0.95)"
+                  : "rgba(200,200,200,0.55)",
+                boxShadow: isActive
+                  ? "0 0 14px rgba(255,215,79,0.85)"
+                  : "none",
+                transition: "background 60ms linear",
+              }}
+            />
+          );
+        })}
+      </div>
+    );
+  }
+
+
+
+  // rozwiazanie na szybko następnej linijki
+  const currentMs = currentTime * 1000;
+  const nextLineText =
+    lyrics.find(l => l.startMs > currentMs)
+      ?.words.map(w => w.text).join(" ")
+      ?? "";
 
   if (!session) return <p>Ładowanie LIVE…</p>;
   return (
@@ -489,7 +626,10 @@ export default function LivePage() {
                 </>
               )}
             </div>
-
+              <NotesTimeline
+                notes={notes}
+                currentMs={currentMs}
+              />
             {/* LYRICS */}
             <div
               style={{
@@ -500,6 +640,7 @@ export default function LivePage() {
                 pointerEvents: "none",
               }}
             >
+
               <div
                 style={{
                   maxWidth: "90%",
@@ -521,13 +662,29 @@ export default function LivePage() {
               >
                 {currentLine ? (
                   <div>
-                    {currentLine.words.map((w, i) => (
-                      <RenderWord
-                        key={i}
-                        word={w}
-                        currentMs={currentTime * 1000}
-                      />
-                    ))}
+                    {/* AKTUALNA LINIA */}
+                    <div>
+                      {currentLine.words.map((w, i) => (
+                        <RenderWord
+                          key={i}
+                          word={w}
+                          currentMs={currentMs}
+                        />
+                      ))}
+                    </div>
+
+                    {/* NASTĘPNA LINIA */}
+                    <div
+                      style={{
+                        marginTop: 10,
+                        fontSize: 18,
+                        fontWeight: 600,
+                        color: "rgba(255,255,255,0.45)",
+                        textShadow: "0 2px 8px rgba(0,0,0,0.85)",
+                      }}
+                    >
+                      {nextLineText || "\u00A0"}
+                    </div>
                   </div>
                 ) : (
                   "\u00A0"
@@ -561,6 +718,7 @@ export default function LivePage() {
               {fmt(currentTime)} / {fmt(duration)}
             </div>
             <div style={{ marginTop: 10 }}>
+              <div>Debug</div>
               <div>Lyrics: {lyrics.length} linijek</div>
               <div>Aktualny czas: {currentTime.toFixed(2)}s ({(currentTime * 1000).toFixed(0)}ms)</div>
               {lyrics.length > 0 && (
