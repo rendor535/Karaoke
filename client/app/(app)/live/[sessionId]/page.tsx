@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
+import { pid } from "process";
 
 type LiveState = "idle" | "selectingPlayer" | "playing" | "paused";
 
@@ -45,6 +46,7 @@ type LyricWord = {
   text: string;
   startMs: number;
   durationMs: number;
+  pitch: number;
 };
 
 type LyricLine = {
@@ -64,6 +66,7 @@ function flattenNotes(lines: LyricLine[]): Note[] {
     line.words.map(w => ({
       startMs: w.startMs,
       durationMs: w.durationMs,
+      pitch: w.pitch,
     }))
   );
 }
@@ -369,6 +372,7 @@ export default function LivePage() {
 
         const tick = Number(parts[1]);
         const length = Number(parts[2]);
+        const pitch = Number(parts[3]);
         const text = parts.slice(4).join(" ").replace("~", "");
 
         const startMs = gap + tick * tickMs - offsetMs;
@@ -382,6 +386,7 @@ export default function LivePage() {
           text,
           startMs,
           durationMs,
+          pitch,
         });
       }
 
@@ -455,13 +460,28 @@ export default function LivePage() {
   function pitchToY(
     pitch: number,
     minPitch: number,
-    maxPitch: number,
-    height: number
+    maxPitch: number
   ) {
-    if (minPitch === maxPitch) return height / 2;
+    if (minPitch === maxPitch) return 50;
 
     const t = (pitch - minPitch) / (maxPitch - minPitch);
-    return height - t * height;
+    return 100 - t * 100; // 0–100%
+  }
+
+
+  function snapPitchRangeToC(minPitch: number, maxPitch: number) { // skala po oktawach
+    const OCTAVE = 12;
+
+    const snappedMin =
+      Math.floor(minPitch / OCTAVE) * OCTAVE;
+
+    const snappedMax =
+      Math.ceil((maxPitch + 1) / OCTAVE) * OCTAVE;
+
+    return {
+      minPitch: snappedMin,
+      maxPitch: snappedMax,
+    };
   }
 
   function NotesTimeline({
@@ -471,16 +491,37 @@ export default function LivePage() {
     notes: Note[];
     currentMs: number;
   }) {
-    const VIEW_MS = 5000;        // ile ms do przodu
-    const PX_PER_MS = 0.12;      // skala czasu
-    const NOW_PERCENT = 0.2;    // 20%
+    const VIEW_MS = 20000;
+    const PX_PER_MS = 0.60;
+    const HEIGHT = 100;
+
+    const visibleNotes = notes.filter(
+      n =>
+        n.startMs - currentMs < VIEW_MS &&
+        n.startMs + n.durationMs - currentMs > -VIEW_MS * 0.2
+    );
+
+    // const pitches = visibleNotes.map(n => n.pitch);
+    const pitches = visibleNotes.map(n => n.pitch).filter(Number.isFinite);
+    if (pitches.length === 0) return null;
+    
+    const realMin = Math.min(...pitches);
+    const realMax = Math.max(...pitches);
+
+    const { minPitch, maxPitch } =
+      snapPitchRangeToC(realMin, realMax);
+
+    if (visibleNotes.length === 0) return null;
+
+    const NOTE_HEIGHT_PERCENT = 14; // % wysokości toru
+
 
     return (
       <div
         style={{
           position: "relative",
           width: "100%",
-          height: 56,
+          height: "100%",
           background: "rgba(255,255,255,0.08)",
           borderRadius: 12,
           overflow: "hidden",
@@ -492,6 +533,7 @@ export default function LivePage() {
           style={{
             position: "absolute",
             left: "20%",
+            boxShadow: "0 0 10px rgba(255,255,255,0.35)",
             top: 0,
             bottom: 0,
             width: 2,
@@ -499,14 +541,11 @@ export default function LivePage() {
           }}
         />
 
-        {notes.map((n, i) => {
+        {visibleNotes.map((n, i) => {
           const leftMs = n.startMs - currentMs;
-          const widthMs = n.durationMs;
+          const widthPx = Math.max(4, n.durationMs * PX_PER_MS);
 
-          // poza oknem widoku
-          if (leftMs > VIEW_MS || leftMs + widthMs < -VIEW_MS * 0.2) {
-            return null;
-          }
+          const yPercent = pitchToY(n.pitch, minPitch, maxPitch);
 
           const isActive =
             currentMs >= n.startMs &&
@@ -518,15 +557,15 @@ export default function LivePage() {
               style={{
                 position: "absolute",
                 left: `calc(20% + ${leftMs * PX_PER_MS}px)`,
-                top: 18,
-                width: Math.max(4, widthMs * PX_PER_MS),
-                height: 20,
-                borderRadius: 6,
+                top: `calc(${yPercent}% - ${NOTE_HEIGHT_PERCENT / 2}%)`,
+                width: widthPx,
+                height: `${NOTE_HEIGHT_PERCENT}%`,
+                borderRadius: "999px",
                 background: isActive
                   ? "rgba(255,215,79,0.95)"
                   : "rgba(200,200,200,0.55)",
                 boxShadow: isActive
-                  ? "0 0 14px rgba(255,215,79,0.85)"
+                  ? "0 0 12px rgba(255,215,79,0.85)"
                   : "none",
                 transition: "background 60ms linear",
               }}
@@ -536,6 +575,7 @@ export default function LivePage() {
       </div>
     );
   }
+
 
 
 
@@ -626,10 +666,20 @@ export default function LivePage() {
                 </>
               )}
             </div>
+            <div
+              style={{
+                height: "50%",
+                minHeight: 160,
+                maxHeight: 360,
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
               <NotesTimeline
                 notes={notes}
                 currentMs={currentMs}
               />
+            </div>
             {/* LYRICS */}
             <div
               style={{
