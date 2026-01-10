@@ -65,9 +65,9 @@ public static class DbSeeder
             Language = "English",
             BPM = 339.2,
             GAP = 12116.75,
-            TxtPath = " ABBA - Money Money Money.txt",
+            TxtPath = "ABBA - Money Money Money.txt",
             AudioPath = "ABBA - Money Money Money.mp3",
-            VideoPath = "ABBA - Money Money Money.avi",
+            VideoPath = "ABBA - Money Money Money.mp4",
             CoverPath = "ABBA - Money Money Money [CO].jpg",
             FolderName = "ABBA - Money Money Money"
         };
@@ -78,7 +78,7 @@ public static class DbSeeder
             Language = "Spanish",
             BPM = 400.0,
             GAP = 2680.0,
-            TxtPath = " La Bella y la Bestia - Gastón (reprise).txt",
+            TxtPath = "La Bella y la Bestia - Gastón (reprise).txt",
             AudioPath = "La Bella y la Bestia - Gastón (reprise).mp3",
             VideoPath = "La Bella y la Bestia - Gastón (reprise).mp4",
             CoverPath = "La Bel;la y la Bestia - Gastón (reprise).jpg",
@@ -94,7 +94,7 @@ public static class DbSeeder
             GAP = 22000.0,
             TxtPath = "Linkin Park - Numb.txt",
             AudioPath = "Linkin Park - Numb.mp3",
-            VideoPath = "Linkin Park - Numb.avi",
+            VideoPath = "Linkin Park - Numb.mp4",
             CoverPath = "Linkin Park - Numb.jpg",
             FolderName = "Linkin Park - Numb"
         };
@@ -108,7 +108,7 @@ public static class DbSeeder
             GAP = 4100.0,
             TxtPath = "Katy Perry - Hot N Cold.txt",
             AudioPath = "Katy Perry - Hot N Cold.mp3",
-            VideoPath = "Katy Perry - Hot N Cold.avi",
+            VideoPath = "Katy Perry - Hot N Cold.mp4",
             CoverPath = "Katy Perry - Hot N Cold.jpg",
             FolderName = "Katy Perry - Hot N Cold"
         };

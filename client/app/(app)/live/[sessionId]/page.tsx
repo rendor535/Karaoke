@@ -41,11 +41,15 @@ type SongMedia = {
   videoPath: string | null;
 };
 
-
+type LyricWord = {
+  text: string;
+  startMs: number;
+  durationMs: number;
+};
 
 type LyricLine = {
   startMs: number;
-  text: string;
+  words: LyricWord[];
 };
 
 export default function LivePage() {
@@ -59,14 +63,15 @@ export default function LivePage() {
   
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const playerContainerRef = useRef<HTMLDivElement>(null);
+
   const [videoError, setVideoError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  // not used yet
   const [lyrics, setLyrics] = useState<LyricLine[]>([]);
-  const [currentLine, setCurrentLine] = useState("");
+  const [currentLine, setCurrentLine] = useState<LyricLine | null>(null);
 
   useEffect(() => {
     load();
@@ -88,6 +93,36 @@ export default function LivePage() {
     };
   }, [currentSong]);
 
+  useEffect(() => {
+    const currentMs = currentTime * 1000;
+
+    let active: LyricLine | null = null;
+
+    for (const line of lyrics) {
+      if (currentMs >= line.startMs) {
+        active = line;
+      } else {
+        break;
+      }
+    }
+
+    setCurrentLine(active);
+  }, [currentTime, lyrics]);
+
+  // listener fullscreen change
+  useEffect(() => {
+    const onFsChange = () => {
+      const isFs = document.fullscreenElement === playerContainerRef.current;
+      playerContainerRef.current?.style.setProperty(
+        "aspect-ratio",
+        isFs ? "auto" : "16 / 9"
+      );
+    };
+
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
+
   async function load() { 
     const data = await api.getSession(id);
     setSession({
@@ -100,11 +135,51 @@ export default function LivePage() {
   async function selectSong(item: QueueItem) {
     if (state === "playing") return;
 
-    const fullItem = await api.getQueueItem(item.id);
+    // Zatrzymaj i wyczyść poprzedni playback
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+
     setVideoError(null);
-    setCurrentSong(fullItem); // ⬅️ TU JUŻ JEST videoPath
+    setCurrentTime(0);
+    setDuration(0);
+
+    // pobierz pełny queue item
+    const fullItem = await api.getQueueItem(item.id);
+    setCurrentSong(fullItem);
+    
+    // Załaduj lyrics PRZED pokazaniem modala wyboru gracza
+    if (fullItem.song.txtPath) {
+      try {
+        const backendUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5159";
+
+        const res = await fetch(
+          `${backendUrl}/files/${fullItem.song.folderName}/${fullItem.song.txtPath}`
+        );
+
+        const txt = await res.text();
+        const parsedLyrics = parseUltraStarWords(txt);
+        console.log("📝 Załadowano lyrics:", parsedLyrics.length, "linijek");
+        setLyrics(parsedLyrics);
+      } catch (err) {
+        console.error("❌ Błąd ładowania lyrics:", err);
+        setLyrics([]);
+      }
+    } else {
+      console.log("⚠️ Brak txtPath dla tej piosenki");
+      setLyrics([]);
+    }
+
     setState("selectingPlayer");
   }
+
 
   function selectPlayer(player: Player) {
     setCurrentPlayer(player);
@@ -144,11 +219,22 @@ export default function LivePage() {
     setState("idle");
     setCurrentSong(null);
     setCurrentPlayer(null);
+    setLyrics([]);
+    setCurrentLine(null);
+    setCurrentTime(0);
+    setDuration(0);
   }
 
 
   function enterFullscreen() {
-    videoRef.current?.requestFullscreen();
+    const el = playerContainerRef.current;
+    if (!el) return;
+
+    if (document.fullscreenElement === el) {
+      document.exitFullscreen();
+    } else {
+      el.requestFullscreen();
+    }
   }
 
   function buildCover(song: SongMedia) {
@@ -159,7 +245,7 @@ export default function LivePage() {
 
     return `${backendUrl}/files/${song.folderName}/${song.coverPath}`;
   }
-  // video + audio
+
   function buildVideo(song: SongMedia) {
     if (!song.videoPath) return null;
 
@@ -215,32 +301,123 @@ export default function LivePage() {
       .padStart(2, "0")}`;
   }
 
-  // lyrics
-  // parser
-  function parseUltraStar(txt: string): LyricLine[] {
-    return txt
-      .split("\n")
-      .filter(l => l.startsWith(":"))
-      .map(l => {
-        // : 45 3 52 To
-        const parts = l.split(" ");
-        const start = Number(parts[1]);
-        const text = parts.slice(4).join(" ").trim();
+  function parseUltraStarWords(txt: string): LyricLine[] {
+    const offsetMs = 0; // stały offset, na razie 0
+    const lines = txt.split("\n");
 
-        return {
-          startMs: start * 10,
+    let bpm = 120;
+    let gap = 0;
+
+    for (const l of lines) {
+      if (l.startsWith("#BPM:")) bpm = Number(l.split(":")[1].replace(",", "."));
+      if (l.startsWith("#GAP:")) gap = Number(l.split(":")[1].replace(",", "."));
+    }
+
+    const tickMs = 60000 / (bpm * 4);
+    const result: LyricLine[] = [];
+
+    let currentWords: LyricWord[] = [];
+    let lineStartMs = 0;
+
+    for (const l of lines) {
+      if (l.startsWith(":") || l.startsWith("*")) {
+        const parts = l.trim().split(/\s+/);
+
+        const tick = Number(parts[1]);
+        const length = Number(parts[2]);
+        const text = parts.slice(4).join(" ").replace("~", "");
+
+        const startMs = gap + tick * tickMs - offsetMs;
+        const durationMs = length * tickMs - offsetMs;
+
+        if (!currentWords.length) {
+          lineStartMs = startMs;
+        }
+
+        currentWords.push({
           text,
-        };
-      });
+          startMs,
+          durationMs,
+        });
+      }
+
+      if (l.startsWith("-") || l === "E") {
+        if (currentWords.length) {
+          result.push({
+            startMs: lineStartMs,
+            words: currentWords,
+          });
+        }
+
+        currentWords = [];
+      }
+    }
+
+    return result;
   }
+
+  // kolorowanie lini
+  function getFillPercent(
+    word: LyricWord,
+    currentMs: number
+  ) {
+    const elapsed = currentMs - word.startMs;
+    if (elapsed <= 0) return 0;
+    if (elapsed >= word.durationMs) return 1;
+    return elapsed / word.durationMs;
+  }
+
+  // renderowanie słowa
+  function RenderWord({
+    word,
+    currentMs,
+  }: {
+    word: LyricWord;
+    currentMs: number;
+  }) {
+    const fill = getFillPercent(word, currentMs);
+
+    return (
+      <span
+        style={{
+          position: "relative",
+          display: "inline-block",
+          marginRight: 6,
+        }}
+      >
+        {/* tło – biały tekst */}
+        <span style={{ color: "#fff", opacity: 0.35 }}>
+          {word.text}
+        </span>
+
+        {/* wypełnienie – animowane */}
+        <span
+          style={{
+            position: "absolute",
+            inset: 0,
+            color: "#ffd54f",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            width: `${fill * 100}%`,
+            transition: "width 50ms linear",
+          }}
+        >
+          {word.text}
+        </span>
+      </span>
+    );
+  }
+
+
   if (!session) return <p>Ładowanie LIVE…</p>;
   return (
     <div style={{ display: "flex", height: "100%" }}>
       {/* LEWA STRONA – PLAYER */}
       <div style={{ flex: 2, padding: 20 }}>
         <h2>{session.name}</h2>
-
+        
         <div
+          ref={playerContainerRef}
           style={{
             position: "relative",
             width: "100%",
@@ -256,6 +433,7 @@ export default function LivePage() {
               ref={videoRef}
               src={buildVideo(currentSong.song) ?? undefined}
               style={{
+                filter: "brightness(0.6)",
                 width: "100%",
                 height: "100%",
                 objectFit: "contain",
@@ -280,6 +458,7 @@ export default function LivePage() {
               }}
             />
           )}
+
           {/* AUDIO */}
           {currentSong && (
             <audio
@@ -311,10 +490,51 @@ export default function LivePage() {
               )}
             </div>
 
-            {/* LYRICS PLACEHOLDER */}
-            <div style={{ textAlign: "center", fontSize: 24 }}>
-              {currentLine || "♪ ♪ ♪"}
+            {/* LYRICS */}
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                justifyContent: "center",
+                paddingBottom: 24,
+                pointerEvents: "none",
+              }}
+            >
+              <div
+                style={{
+                  maxWidth: "90%",
+                  padding: "12px 18px",
+                  borderRadius: 14,
+                  background: currentLine ? "rgba(0,0,0,0.55)" : "transparent",
+                  backdropFilter: currentLine ? "blur(6px)" : "none",
+                  WebkitBackdropFilter: currentLine ? "blur(6px)" : "none",
+                  textAlign: "center",
+                  fontSize: 36,
+                  fontWeight: 800,
+                  lineHeight: 1.2,
+                  letterSpacing: 0.2,
+                  color: "#fff",
+                  textShadow: "0 2px 10px rgba(0,0,0,0.9)",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                }}
+              >
+                {currentLine ? (
+                  <div>
+                    {currentLine.words.map((w, i) => (
+                      <RenderWord
+                        key={i}
+                        word={w}
+                        currentMs={currentTime * 1000}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  "\u00A0"
+                )}
+              </div>
             </div>
+
           </div>
 
           {/* FULLSCREEN */}
@@ -341,7 +561,13 @@ export default function LivePage() {
               {fmt(currentTime)} / {fmt(duration)}
             </div>
             <div style={{ marginTop: 10 }}>
-              <em>[lyrics placeholder]</em>
+              <div>Lyrics: {lyrics.length} linijek</div>
+              <div>Aktualny czas: {currentTime.toFixed(2)}s ({(currentTime * 1000).toFixed(0)}ms)</div>
+              {lyrics.length > 0 && (
+                <div style={{ fontSize: 12, marginTop: 5 }}>
+                  Następne: {lyrics.find(l => l.startMs > currentTime * 1000)?.words.map(w => w.text).join(" ") || "brak"}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -359,49 +585,52 @@ export default function LivePage() {
       </div>
 
       {/* PRAWA STRONA – KOLEJKA */}
-      {session.queue.map((q) => (
-      <div
-        key={q.id}
-        onClick={() => selectSong(q)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          padding: 8,
-          cursor: state === "playing" ? "not-allowed" : "pointer",
-          opacity: state === "playing" ? 0.5 : 1,
-          borderBottom: "1px solid #eee",
-        }}
-      >
-        {/* COVER */}
-        <div style={{ width: 50 }}>
-          {q.song.coverPath ? (
-            <img
-              src={buildCover(q.song)!}
-              style={{ width: 50 }}
-            />
-          ) : (
-            <div
-              style={{
-                width: 50,
-                height: 50,
-                background: "#ccc",
-              }}
-            />
-          )}
-        </div>
+      <div style={{ flex: 1, padding: 20, overflowY: "auto" }}>
+        <h3>Kolejka</h3>
+        {session.queue.map((q) => (
+          <div
+            key={q.id}
+            onClick={() => selectSong(q)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: 8,
+              cursor: state === "playing" ? "not-allowed" : "pointer",
+              opacity: state === "playing" ? 0.5 : 1,
+              borderBottom: "1px solid #eee",
+            }}
+          >
+            {/* COVER */}
+            <div style={{ width: 50 }}>
+              {q.song.coverPath ? (
+                <img
+                  src={buildCover(q.song)!}
+                  style={{ width: 50 }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: 50,
+                    height: 50,
+                    background: "#ccc",
+                  }}
+                />
+              )}
+            </div>
 
-        {/* META */}
-        <div>
-          <div>
-            {q.position}. {q.song.artist}
+            {/* META */}
+            <div>
+              <div>
+                {q.position}. {q.song.artist}
+              </div>
+              <div style={{ fontSize: 12 }}>
+                {q.song.title}
+              </div>
+            </div>
           </div>
-          <div style={{ fontSize: 12 }}>
-            {q.song.title}
-          </div>
-        </div>
+        ))}
       </div>
-    ))}
 
       {/* MODAL – WYBÓR GRACZA */}
       {state === "selectingPlayer" && (
@@ -432,6 +661,8 @@ export default function LivePage() {
               onClick={() => {
                 setState("idle");
                 setCurrentSong(null);
+                setLyrics([]);
+                setCurrentLine(null);
               }}
             >
               Anuluj
