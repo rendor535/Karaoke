@@ -81,7 +81,7 @@ public static class DbSeeder
             TxtPath = "La Bella y la Bestia - Gastón (reprise).txt",
             AudioPath = "La Bella y la Bestia - Gastón (reprise).mp3",
             VideoPath = "La Bella y la Bestia - Gastón (reprise).mp4",
-            CoverPath = "La Bel;la y la Bestia - Gastón (reprise).jpg",
+            CoverPath = "La Bella y la Bestia - Gastón (reprise).jpg",
             FolderName = "La Bella y la Bestia - Gastón (reprise)"
         };
 

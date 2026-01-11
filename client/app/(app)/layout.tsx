@@ -26,7 +26,6 @@ export default function RootLayout({
                 <li><a href="/active">Aktywna sesja?</a></li>
                 <li><a href="/sessions">Sesje</a></li>
                 <li><a href="/songs">Piosenki</a></li>
-                <li><a href="/settings">Ustawienia</a></li>
               </ul>
             </nav>
           </aside>

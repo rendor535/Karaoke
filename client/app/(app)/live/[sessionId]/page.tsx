@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
-import { pid } from "process";
+import Pitchfinder from "pitchfinder";
 
 type LiveState = "idle" | "selectingPlayer" | "playing" | "paused";
 
@@ -94,9 +94,15 @@ export default function LivePage() {
   const [currentLine, setCurrentLine] = useState<LyricLine | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
 
+  // stany do mikrofonu (z poradnika)
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const micStreamRef = useRef<MediaStream | null>(null);
+  const detectorRef = useRef<any>(null);
+  const [micPitch, setMicPitch] = useState<number | null>(null);
+  const [micFreq, setMicFreq] = useState<number | null>(null);
   const rafRef = useRef<number | null>(null);
-
-  const VIEW_MS = 4000; // 4 sekundy do przodum, do nutek
+  const smoothedPitchRef = useRef<number | null>(null);
 
   useEffect(() => {
     load();
@@ -169,6 +175,108 @@ export default function LivePage() {
     };
   }, [state]);
 
+
+  // mikrofon i pitch detection
+  function hzToUltrastarPitch(freq: number) {
+    // UltraStar: 0 = C4 = 261.63 Hz
+    const C4 = 261.63;
+    return Math.round(12 * Math.log2(freq / C4));
+  }
+  function listenPitch() {
+    const analyser = analyserRef.current;
+    const detector = detectorRef.current;
+
+    if (!analyser || !detector) return;
+
+    const buffer = new Float32Array(analyser.fftSize);
+
+    const tick = () => {
+      analyser.getFloatTimeDomainData(buffer);
+
+      const freq = detector(buffer); // Hz lub null
+
+      // debug 
+      const rms = Math.sqrt(
+        buffer.reduce((sum, v) => sum + v * v, 0) / buffer.length
+      );
+      console.log("🎧 RMS:", rms.toFixed(4));
+      console.log("🎼 raw freq:", freq);
+
+      const alpha = 0.25;
+
+      if (
+        typeof freq === "number" &&
+        freq >= 80 &&
+        freq <= 400 &&
+        rms >= 0.02
+      ) {
+        const pitch = hzToUltrastarPitch(freq);
+
+        if (smoothedPitchRef.current === null) {
+          smoothedPitchRef.current = pitch;
+        } else {
+          smoothedPitchRef.current =
+            alpha * pitch + (1 - alpha) * smoothedPitchRef.current;
+        }
+        setMicFreq(freq);
+        setMicPitch(Math.round(smoothedPitchRef.current));
+      } 
+      else {
+        setMicFreq(null);
+        setMicPitch(null);
+      }
+    };
+    tick();
+  }
+  //debug
+  function ultrastarPitchToNote(pitch: number) {
+    // UltraStar: 0 = C4
+    const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+    const noteIndex = ((pitch % 12) + 12) % 12;
+    const octave = 4 + Math.floor(pitch / 12);
+
+    return `${NOTE_NAMES[noteIndex]}${octave}`;
+  }
+
+  async function startMicrophone() {
+
+    if (audioCtxRef.current) return;
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: false,
+      },
+    });
+
+    const audioCtx = new AudioContext();
+
+    if (audioCtx.state === "suspended") {
+      await audioCtx.resume();
+    }
+    const source = audioCtx.createMediaStreamSource(stream);
+    const analyser = audioCtx.createAnalyser();
+
+    analyser.fftSize = 4096;
+
+    source.connect(analyser);
+
+    const detector = Pitchfinder.YIN({
+      sampleRate: audioCtx.sampleRate,
+      threshold: 0.1,
+      probabilityThreshold: 0.1,
+    });
+
+    audioCtxRef.current = audioCtx;
+    analyserRef.current = analyser;
+    micStreamRef.current = stream;
+    detectorRef.current = detector;
+
+    listenPitch();
+  }
+
   async function load() { 
     const data = await api.getSession(id);
     setSession({
@@ -213,7 +321,7 @@ export default function LivePage() {
         const txt = await res.text();
         const parsedLyrics = parseUltraStarWords(txt);
         setNotes(flattenNotes(parsedLyrics));
-        console.log("📝 Załadowano lyrics:", parsedLyrics.length, "linijek");
+        // console.log("📝 Załadowano lyrics:", parsedLyrics.length, "linijek");
         setLyrics(parsedLyrics);
       } catch (err) {
         console.error("❌ Błąd ładowania lyrics:", err);
@@ -235,6 +343,7 @@ export default function LivePage() {
     setTimeout(() => {
       audioRef.current?.play();
       videoRef.current?.play();
+      startMicrophone();
     }, 0);
   }
 
@@ -301,7 +410,6 @@ export default function LivePage() {
 
     const url = `${backendUrl}/files/${song.folderName}/${song.videoPath}`;
 
-    console.log("🎬 VIDEO SRC =", url);
     return url;
   }
 
@@ -312,7 +420,6 @@ export default function LivePage() {
       process.env.NEXT_PUBLIC_API_URL || "http://localhost:5159";
 
     const url = `${backendUrl}/files/${song.folderName}/${song.audioPath}`;
-    console.log("🔊 AUDIO SRC =", url);
     return url;
   }
 
@@ -487,14 +594,16 @@ export default function LivePage() {
   function NotesTimeline({
     notes,
     currentMs,
+    micPitch
   }: {
     notes: Note[];
     currentMs: number;
+    micPitch: number | null;
   }) {
     const VIEW_MS = 20000;
     const PX_PER_MS = 0.60;
     const HEIGHT = 100;
-
+    
     const visibleNotes = notes.filter(
       n =>
         n.startMs - currentMs < VIEW_MS &&
@@ -514,7 +623,10 @@ export default function LivePage() {
     if (visibleNotes.length === 0) return null;
 
     const NOTE_HEIGHT_PERCENT = 14; // % wysokości toru
-
+    const micY =
+      micPitch !== null
+        ? pitchToY(micPitch, minPitch, maxPitch)
+        : null;
 
     return (
       <div
@@ -571,13 +683,31 @@ export default function LivePage() {
               }}
             />
           );
+
         })}
+        {micPitch !== null && (
+        <div
+          style={{
+            position: "absolute",
+            left: "20%",               // NA LINII TERAZ
+            top: `${pitchToY(
+              micPitch,
+              minPitch,
+              maxPitch
+            )}%`,
+            transform: "translate(-50%, -50%)",
+            width: 14,
+            height: 14,
+            borderRadius: "50%",
+            background: "red",
+            boxShadow: "0 0 12px rgba(255,0,0,0.9)",
+            zIndex: 10,
+          }}
+        />
+        )}
       </div>
     );
   }
-
-
-
 
   // rozwiazanie na szybko następnej linijki
   const currentMs = currentTime * 1000;
@@ -678,6 +808,7 @@ export default function LivePage() {
               <NotesTimeline
                 notes={notes}
                 currentMs={currentMs}
+                micPitch={micPitch}
               />
             </div>
             {/* LYRICS */}
@@ -774,6 +905,17 @@ export default function LivePage() {
               {lyrics.length > 0 && (
                 <div style={{ fontSize: 12, marginTop: 5 }}>
                   Następne: {lyrics.find(l => l.startMs > currentTime * 1000)?.words.map(w => w.text).join(" ") || "brak"}
+                </div>
+              )}
+              <div style={{ marginTop: 6 }}>
+                🎤 Mic pitch:{" "}
+                {micPitch !== null
+                  ? `${micPitch} (${ultrastarPitchToNote(micPitch)})`
+                  : "—"}
+              </div>
+              {micFreq !== null && (
+                <div style={{ fontSize: 12, opacity: 0.7 }}>
+                  🎧 {micFreq.toFixed(1)} Hz
                 </div>
               )}
             </div>
