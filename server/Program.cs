@@ -72,9 +72,23 @@ var app = builder.Build();
 app.UseCors("AllowNextJs");
 
 // Static files
+/*
 var contentRoot = Directory.GetCurrentDirectory();        // .../Karaoke/server
 var filesPath = Path.Combine(contentRoot, "..", "files"); // .../Karaoke/files
 filesPath = Path.GetFullPath(filesPath);
+*/
+var filesPath = builder.Configuration["FilesRoot"] 
+    ?? "/app/files";
+
+Directory.CreateDirectory(filesPath);
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(filesPath),
+    RequestPath = "/files"
+});
+
+
 Directory.CreateDirectory(filesPath);
 
 app.UseStaticFiles(new StaticFileOptions

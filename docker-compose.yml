@@ -6,7 +6,7 @@ services:
       context: ./server
       dockerfile: Dockerfile
     volumes:
-    -   ./files:/app/files
+    - ./files:/app/files
     container_name: api
     ports:
       - "5159:5159"
@@ -14,6 +14,7 @@ services:
       ASPNETCORE_URLS: http://+:5159
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=app;Username=postgres;Password=postgres
+      FilesRoot: /app/files
     depends_on:
       - db
 

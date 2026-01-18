@@ -38,7 +38,7 @@ export default function ActiveSessionsPage() {
   }
 
   return (
-    <div>
+    <div className="active-page">
       <h1>Aktywne sesje</h1>
 
       {loading && <p>Ładowanie...</p>}
@@ -48,42 +48,46 @@ export default function ActiveSessionsPage() {
       )}
 
       {sessions.map((s) => (
-        <div
-          key={s.id}
-          style={{
-            display: "flex",
-            gap: 20,
-            padding: 10,
-            borderBottom: "1px solid #ccc",
-            alignItems: "center",
-          }}
-        >
-          <div style={{ width: 200 }}>{s.name}</div>
-          <div style={{ width: 200 }}>{s.owner.email}</div>
-          <div style={{ width: 160 }}>
+        <div key={s.id} className="active-row">
+          <div className="active-name">{s.name}</div>
+          <div className="active-owner">{s.owner.email}</div>
+
+          <div className="active-date">
             {new Date(s.createdAt).toLocaleString()}
           </div>
-          <div style={{ width: 160 }}>
+
+          <div className="active-date">
             {s.startedAt
               ? new Date(s.startedAt).toLocaleString()
               : "-"}
           </div>
-          <div style={{ width: 80 }}>
+
+          <div className="active-meta">
             {s.playersCount} gr.
           </div>
-          <div style={{ width: 80 }}>
+
+          <div className="active-meta">
             {s.songsCount} utw.
           </div>
 
-          <button onClick={() => deactivate(s.id)}>
-            Deactivate
-          </button>
-
-            <button onClick={() => router.push(`/live/${s.id}`)}>
-            🎤 Śpiewaj
+          <div className="active-actions">
+            <button
+              className="danger"
+              onClick={() => deactivate(s.id)}
+            >
+              Dezaktywuj
             </button>
+
+            <button
+              className="primary"
+              onClick={() => router.push(`/live/${s.id}`)}
+            >
+              Śpiewaj
+            </button>
+          </div>
         </div>
       ))}
     </div>
   );
+
 }

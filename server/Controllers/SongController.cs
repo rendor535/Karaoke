@@ -64,9 +64,22 @@ public class SongController : ControllerBase
         if (!request.Zip.FileName.EndsWith(".zip"))
             return BadRequest("Plik musi być ZIP");
 
-        Directory.CreateDirectory(_filesRoot);
 
         var songDir = Path.Combine(_filesRoot, request.FolderName);
+
+        // sprawdzenie w systemie plików
+        if (Directory.Exists(songDir))
+        {
+            return Conflict("Folder o podanej nazwie już istnieje");
+        }
+
+        var existsInDb = await _db.Song.AnyAsync(s => s.FolderName == request.FolderName);
+        if (existsInDb)
+        {
+            return Conflict("Utwór z taką nazwą folderu już istnieje w bazie");
+        }
+
+        Directory.CreateDirectory(_filesRoot);
         Directory.CreateDirectory(songDir);
 
         var zipPath = Path.Combine(songDir, "upload.zip");

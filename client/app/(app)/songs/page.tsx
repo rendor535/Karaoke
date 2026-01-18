@@ -84,173 +84,117 @@ export default function SongsPage() {
     setSessions(data);
   }
   
-  return (
-    <div>
-      <h1>Utwory</h1>
+return (
+  <div className="songs-page">
+    <h1>Utwory</h1>
 
-      {/* SUPERUSER / ADMIN */}
-      <div style={{ marginBottom: 20 }}>
-        <button
-          disabled={role === "User"}
-          onClick={() => router.push("/songs/upload")}
-        >
-          Dodaj utwór do bazy
-        </button>
-      </div>
+    <div className="songs-actions">
+      <button
+        disabled={role === "User"}
+        onClick={() => router.push("/songs/upload")}
+      >
+        Dodaj utwór do bazy
+      </button>
+    </div>
 
-      {/* WYSZUKIWANIE TEKSTOWE */}
-      <div style={{ marginBottom: 10 }}>
-        <select
-          value={searchBy}
-          onChange={(e) => setSearchBy(e.target.value as any)}
-        >
-          <option value="all">Nazwa utworu lub artysta</option>
-          <option value="title">Nazwa utworu</option>
-          <option value="artist">Artysta</option>
-        </select>
+    <div className="filters">
+      <select value={searchBy} onChange={(e) => setSearchBy(e.target.value as any)}>
+        <option value="all">Nazwa lub artysta</option>
+        <option value="title">Nazwa</option>
+        <option value="artist">Artysta</option>
+      </select>
 
-        <input
-          placeholder="Szukaj..."
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
+      <input placeholder="Szukaj..." value={q} onChange={(e) => setQ(e.target.value)} />
+      <button onClick={() => load({ q, searchBy })}>Szukaj</button>
+    </div>
 
-        <button onClick={() => load({ q, searchBy })}>
-          Szukaj
-        </button>
-      </div>
+    <div className="filters">
+      <input
+        placeholder="Język (pl, en)"
+        value={language}
+        onChange={(e) => setLanguage(e.target.value)}
+      />
+      <button onClick={() => load({ language })}>Szukaj po języku</button>
+    </div>
 
-      {/* WYSZUKIWANIE PO JĘZYKU */}
-      <div style={{ marginBottom: 20 }}>
-        <input
-          placeholder="Język (np. pl, en)"
-          value={language}
-          onChange={(e) => setLanguage(e.target.value)}
-        />
-        <button onClick={() => load({ language })}>
-          Szukaj po języku
-        </button>
-      </div>
-
-      {loading && <p>Ładowanie...</p>}
-
-      {/* LISTA UTWORÓW */}
-      <div>
-        {songs.map((s) => (
-          <div
-            key={s.id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 20,
-              borderBottom: "1px solid #ccc",
-              padding: 10,
-            }}
-          >
-            {/* COVER */}
-            <div style={{ width: 100 }}>
-              {s.coverPath ? (
-                <img
-                  src={buildCover(s)!}
-                  alt={s.title}
-                  style={{ width: 100 }}
-                />
-              ) : (
-                <div>brak</div>
-              )}
-            </div>
-
-            {/* META */}
-            <div style={{ width: 200 }}>{s.title}</div>
-            <div style={{ width: 200 }}>{s.artist}</div>
-            <div style={{ width: 80 }}>{s.language}</div>
-
-            {/* AKCJE */}
-            <div style={{ display: "flex", gap: 10 }}>
-                <button onClick={() => openAddToSessionModal(s.id)}>
-                    Dodaj do sesji
-                </button>
-
-              {(role === "Admin" || role === "Superuser") && (
-                <button onClick={() => removeSong(s.id)}>
-                  Usuń
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-        {/* MODAL */}
-        {modalSongId !== null && (
-        <div
-            style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-            }}
-        >
-            <div style={{ background: "white", padding: 20, minWidth: 500 }}>
-            <h3>Dodaj utwór do sesji</h3>
-
-            <div>
-                {sessions.map((s) => (
-                <div
-                    key={s.id}
-                    style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    borderBottom: "1px solid #ccc",
-                    padding: 6,
-                    }}
-                >
-                    <input type="checkbox" checked={selectedSessions.has(s.id)} onChange={() => {
-                        setSelectedSessions((prev) => {
-                        const next = new Set(prev);
-                        next.has(s.id) ? next.delete(s.id) : next.add(s.id);
-                        return next;
-                        });
-                    }}
-                    />
-                    <div style={{ width: 180 }}>{s.name}</div>
-                    <div style={{ width: 80 }}>{s.songsCount} utw.</div>
-                    <div style={{ width: 80 }}>{s.playersCount} gr.</div>
-                    <div>
-                    {new Date(s.createdAt).toLocaleDateString()}
-                    </div>
-                </div>
-                ))}
-            </div>
-
-            <div style={{ marginTop: 20, display: "flex", gap: 10 }}>
-                <button onClick={() => setModalSongId(null)}>
-                Anuluj
-                </button>
-
-                <button disabled={selectedSessions.size === 0 || modalLoading} onClick={async () => {
-                    if (!modalSongId) return;
-
-                    setModalLoading(true);
-
-                    for (const sessionId of selectedSessions) {
-                        await api.addSongToSession(sessionId, modalSongId);
-                    }
-
-                    setModalLoading(false);
-                    setModalSongId(null);
-                }}
-                >
-                Zatwierdź
-                </button>
-            </div>
-            </div>
+    {songs.map((s) => (
+      <div key={s.id} className="song-row">
+        <div className="song-cover">
+          {s.coverPath ? (
+            <img src={buildCover(s)!} alt={s.title} />
+          ) : (
+            "brak"
+          )}
         </div>
-        )}
+
+        <div className="song-meta">
+          <div className="song-meta-title">{s.title}</div>
+          <div className="song-meta-artist">{s.artist}</div>
+        </div>
+
+        <div className="song-lang">{s.language}</div>
+
+        <div className="song-actions">
+          <button onClick={() => openAddToSessionModal(s.id)}>
+            Dodaj do sesji
+          </button>
+
+          {(role === "Admin" || role === "Superuser") && (
+            <button className="danger" onClick={() => removeSong(s.id)}>
+              Usuń
+            </button>
+          )}
+        </div>
+      </div>
+    ))}
+
+    {modalSongId !== null && (
+      <div className="modal-overlay">
+        <div className="modal">
+          <h3>Dodaj utwór do sesji</h3>
+
+          {sessions.map((s) => (
+            <div key={s.id} className="session-row">
+              <input
+                type="checkbox"
+                checked={selectedSessions.has(s.id)}
+                onChange={() => {
+                  setSelectedSessions((prev) => {
+                    const next = new Set(prev);
+                    next.has(s.id) ? next.delete(s.id) : next.add(s.id);
+                    return next;
+                  });
+                }}
+              />
+              <div style={{ width: 160 }}>{s.name}</div>
+              <div>{s.songsCount} utw.</div>
+              <div>{s.playersCount} gr.</div>
+              <div>{new Date(s.createdAt).toLocaleDateString()}</div>
+            </div>
+          ))}
+
+          <div className="modal-actions">
+            <button onClick={() => setModalSongId(null)}>Anuluj</button>
+            <button
+              className="primary"
+              disabled={selectedSessions.size === 0 || modalLoading}
+              onClick={async () => {
+                if (!modalSongId) return;
+                setModalLoading(true);
+                for (const sessionId of selectedSessions) {
+                  await api.addSongToSession(sessionId, modalSongId);
+                }
+                setModalLoading(false);
+                setModalSongId(null);
+              }}
+            >
+              Zatwierdź
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
+
 }

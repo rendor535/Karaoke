@@ -5,6 +5,11 @@ import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
 import Pitchfinder from "pitchfinder";
 
+import { LyricsOverlay } from "@/components/LyricsOverlay";
+import { NotesTimeline } from "@/components/NotesTimeline";
+import { SelectPlayerModal } from "@/components/SelectPlayerModal";
+import { QueueList } from "@/components/QueueList";
+
 type LiveState = "idle" | "selectingPlayer" | "playing" | "paused";
 
 type LiveSession = {
@@ -512,203 +517,6 @@ export default function LivePage() {
     return result;
   }
 
-  // kolorowanie lini
-  function getFillPercent(
-    word: LyricWord,
-    currentMs: number
-  ) {
-    const elapsed = currentMs - word.startMs;
-    if (elapsed <= 0) return 0;
-    if (elapsed >= word.durationMs) return 1;
-    return elapsed / word.durationMs;
-  }
-
-  // renderowanie słowa
-  function RenderWord({
-    word,
-    currentMs,
-  }: {
-    word: LyricWord;
-    currentMs: number;
-  }) {
-    const fill = getFillPercent(word, currentMs);
-
-    return (
-      <span
-        style={{
-          position: "relative",
-          display: "inline-block",
-          marginRight: 6,
-        }}
-      >
-        {/* tło – biały tekst */}
-        <span style={{ color: "#fff", opacity: 0.35 }}>
-          {word.text}
-        </span>
-
-        {/* wypełnienie – animowane */}
-        <span
-          style={{
-            position: "absolute",
-            inset: 0,
-            color: "#ffd54f",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            width: `${fill * 100}%`,
-            transition: "width 50ms linear",
-          }}
-        >
-          {word.text}
-        </span>
-      </span>
-    );
-  }
-
-  function pitchToY(
-    pitch: number,
-    minPitch: number,
-    maxPitch: number
-  ) {
-    if (minPitch === maxPitch) return 50;
-
-    const t = (pitch - minPitch) / (maxPitch - minPitch);
-    return 100 - t * 100; // 0–100%
-  }
-
-
-  function snapPitchRangeToC(minPitch: number, maxPitch: number) { // skala po oktawach
-    const OCTAVE = 12;
-
-    const snappedMin =
-      Math.floor(minPitch / OCTAVE) * OCTAVE;
-
-    const snappedMax =
-      Math.ceil((maxPitch + 1) / OCTAVE) * OCTAVE;
-
-    return {
-      minPitch: snappedMin,
-      maxPitch: snappedMax,
-    };
-  }
-
-  function NotesTimeline({
-    notes,
-    currentMs,
-    micPitch
-  }: {
-    notes: Note[];
-    currentMs: number;
-    micPitch: number | null;
-  }) {
-    const VIEW_MS = 20000;
-    const PX_PER_MS = 0.60;
-    const HEIGHT = 100;
-    
-    const visibleNotes = notes.filter(
-      n =>
-        n.startMs - currentMs < VIEW_MS &&
-        n.startMs + n.durationMs - currentMs > -VIEW_MS * 0.2
-    );
-
-    // const pitches = visibleNotes.map(n => n.pitch);
-    const pitches = visibleNotes.map(n => n.pitch).filter(Number.isFinite);
-    if (pitches.length === 0) return null;
-    
-    const realMin = Math.min(...pitches);
-    const realMax = Math.max(...pitches);
-
-    const { minPitch, maxPitch } =
-      snapPitchRangeToC(realMin, realMax);
-
-    if (visibleNotes.length === 0) return null;
-
-    const NOTE_HEIGHT_PERCENT = 14; // % wysokości toru
-    const micY =
-      micPitch !== null
-        ? pitchToY(micPitch, minPitch, maxPitch)
-        : null;
-
-    return (
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          height: "100%",
-          background: "rgba(255,255,255,0.08)",
-          borderRadius: 12,
-          overflow: "hidden",
-          marginBottom: 12,
-        }}
-      >
-        {/* LINIA TERAZ */}
-        <div
-          style={{
-            position: "absolute",
-            left: "20%",
-            boxShadow: "0 0 10px rgba(255,255,255,0.35)",
-            top: 0,
-            bottom: 0,
-            width: 2,
-            background: "rgba(255,255,255,0.35)",
-          }}
-        />
-
-        {visibleNotes.map((n, i) => {
-          const leftMs = n.startMs - currentMs;
-          const widthPx = Math.max(4, n.durationMs * PX_PER_MS);
-
-          const yPercent = pitchToY(n.pitch, minPitch, maxPitch);
-
-          const isActive =
-            currentMs >= n.startMs &&
-            currentMs <= n.startMs + n.durationMs;
-
-          return (
-            <div
-              key={i}
-              style={{
-                position: "absolute",
-                left: `calc(20% + ${leftMs * PX_PER_MS}px)`,
-                top: `calc(${yPercent}% - ${NOTE_HEIGHT_PERCENT / 2}%)`,
-                width: widthPx,
-                height: `${NOTE_HEIGHT_PERCENT}%`,
-                borderRadius: "999px",
-                background: isActive
-                  ? "rgba(255,215,79,0.95)"
-                  : "rgba(200,200,200,0.55)",
-                boxShadow: isActive
-                  ? "0 0 12px rgba(255,215,79,0.85)"
-                  : "none",
-                transition: "background 60ms linear",
-              }}
-            />
-          );
-
-        })}
-        {micPitch !== null && (
-        <div
-          style={{
-            position: "absolute",
-            left: "20%",               // NA LINII TERAZ
-            top: `${pitchToY(
-              micPitch,
-              minPitch,
-              maxPitch
-            )}%`,
-            transform: "translate(-50%, -50%)",
-            width: 14,
-            height: 14,
-            borderRadius: "50%",
-            background: "red",
-            boxShadow: "0 0 12px rgba(255,0,0,0.9)",
-            zIndex: 10,
-          }}
-        />
-        )}
-      </div>
-    );
-  }
-
   // rozwiazanie na szybko następnej linijki
   const currentMs = currentTime * 1000;
   const nextLineText =
@@ -718,35 +526,21 @@ export default function LivePage() {
 
   if (!session) return <p>Ładowanie LIVE…</p>;
   return (
-    <div style={{ display: "flex", height: "100%" }}>
+    <div className="live-page">
       {/* LEWA STRONA – PLAYER */}
-      <div style={{ flex: 2, padding: 20 }}>
+      <div className="live-player">
         <h2>{session.name}</h2>
-        
+
         <div
           ref={playerContainerRef}
-          style={{
-            position: "relative",
-            width: "100%",
-            aspectRatio: "16 / 9",
-            color: "#fff",
-            overflow: "hidden",
-            ...getBackgroundStyle(currentSong?.song ?? null),
-          }}
+          className="player-container"
+          style={getBackgroundStyle(currentSong?.song ?? null)}
         >
           {/* VIDEO – tylko jeśli jest MP4 i nie ma błędu */}
           {currentSong?.song.videoPath && !videoError && (
             <video
               ref={videoRef}
               src={buildVideo(currentSong.song) ?? undefined}
-              style={{
-                filter: "brightness(0.6)",
-                width: "100%",
-                height: "100%",
-                objectFit: "contain",
-                position: "absolute",
-                inset: 0,
-              }}
               controls={false}
               onError={(e) => {
                 const err = e.currentTarget.error;
@@ -776,26 +570,27 @@ export default function LivePage() {
           )}
 
           {/* OVERLAY */}
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              padding: 16,
-              pointerEvents: "none",
-            }}
-          >
+          <div className="player-overlay">
             {/* TOP INFO */}
             <div>
               {currentSong && (
                 <>
-                  <div>🎵 {currentSong.song.artist} – {currentSong.song.title}</div>
+                  <div>
+                    🎵 {currentSong.song.artist} – {currentSong.song.title}
+                  </div>
                   <div>🎤 {currentPlayer?.nick}</div>
                 </>
               )}
             </div>
+            
+            {/* LYRICS */}
+            <LyricsOverlay
+              currentLine={currentLine}
+              nextLineText={nextLineText}
+              currentMs={currentMs}
+            />
+
+            {/* NOTES */}
             <div
               style={{
                 height: "50%",
@@ -811,108 +606,49 @@ export default function LivePage() {
                 micPitch={micPitch}
               />
             </div>
-            {/* LYRICS */}
-            <div
-              style={{
-                width: "100%",
-                display: "flex",
-                justifyContent: "center",
-                paddingBottom: 24,
-                pointerEvents: "none",
-              }}
-            >
 
-              <div
-                style={{
-                  maxWidth: "90%",
-                  padding: "12px 18px",
-                  borderRadius: 14,
-                  background: currentLine ? "rgba(0,0,0,0.55)" : "transparent",
-                  backdropFilter: currentLine ? "blur(6px)" : "none",
-                  WebkitBackdropFilter: currentLine ? "blur(6px)" : "none",
-                  textAlign: "center",
-                  fontSize: 36,
-                  fontWeight: 800,
-                  lineHeight: 1.2,
-                  letterSpacing: 0.2,
-                  color: "#fff",
-                  textShadow: "0 2px 10px rgba(0,0,0,0.9)",
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                }}
-              >
-                {currentLine ? (
-                  <div>
-                    {/* AKTUALNA LINIA */}
-                    <div>
-                      {currentLine.words.map((w, i) => (
-                        <RenderWord
-                          key={i}
-                          word={w}
-                          currentMs={currentMs}
-                        />
-                      ))}
-                    </div>
-
-                    {/* NASTĘPNA LINIA */}
-                    <div
-                      style={{
-                        marginTop: 10,
-                        fontSize: 18,
-                        fontWeight: 600,
-                        color: "rgba(255,255,255,0.45)",
-                        textShadow: "0 2px 8px rgba(0,0,0,0.85)",
-                      }}
-                    >
-                      {nextLineText || "\u00A0"}
-                    </div>
-                  </div>
-                ) : (
-                  "\u00A0"
-                )}
-              </div>
-            </div>
 
           </div>
 
           {/* FULLSCREEN */}
-          <button
-            onClick={enterFullscreen}
-            style={{
-              position: "absolute",
-              bottom: 10,
-              right: 10,
-              zIndex: 10,
-            }}
-          >
+          <button onClick={enterFullscreen} className="fullscreen-btn">
             ⛶
           </button>
         </div>
 
         {/* INFO POD PLAYEREM */}
         {currentSong && (
-          <div>
-            <strong>
-              {currentSong.song.title}
-            </strong>
+          <div className="live-info">
+            <strong>{currentSong.song.title}</strong>
+
             <div>
               {fmt(currentTime)} / {fmt(duration)}
             </div>
+
             <div style={{ marginTop: 10 }}>
               <div>Debug</div>
               <div>Lyrics: {lyrics.length} linijek</div>
-              <div>Aktualny czas: {currentTime.toFixed(2)}s ({(currentTime * 1000).toFixed(0)}ms)</div>
+              <div>
+                Aktualny czas: {currentTime.toFixed(2)}s (
+                {(currentTime * 1000).toFixed(0)}ms)
+              </div>
+
               {lyrics.length > 0 && (
                 <div style={{ fontSize: 12, marginTop: 5 }}>
-                  Następne: {lyrics.find(l => l.startMs > currentTime * 1000)?.words.map(w => w.text).join(" ") || "brak"}
+                  Następne:{" "}
+                  {lyrics.find(l => l.startMs > currentTime * 1000)
+                    ?.words.map(w => w.text)
+                    .join(" ") || "brak"}
                 </div>
               )}
+
               <div style={{ marginTop: 6 }}>
                 🎤 Mic pitch:{" "}
                 {micPitch !== null
                   ? `${micPitch} (${ultrastarPitchToNote(micPitch)})`
                   : "—"}
               </div>
+
               {micFreq !== null && (
                 <div style={{ fontSize: 12, opacity: 0.7 }}>
                   🎧 {micFreq.toFixed(1)} Hz
@@ -922,104 +658,44 @@ export default function LivePage() {
           </div>
         )}
 
+        {/* CONTROLS */}
         {state === "playing" && (
-          <button onClick={pauseSong}>⏸ STOP</button>
+          <div className="live-controls">
+            <button onClick={pauseSong}>⏸ STOP</button>
+          </div>
         )}
 
         {state === "paused" && (
-          <>
+          <div className="live-controls">
             <button onClick={resumeSong}>▶ Wznów</button>
             <button onClick={exitSong}>⏹ Wyjdź</button>
-          </>
+          </div>
         )}
       </div>
 
       {/* PRAWA STRONA – KOLEJKA */}
-      <div style={{ flex: 1, padding: 20, overflowY: "auto" }}>
-        <h3>Kolejka</h3>
-        {session.queue.map((q) => (
-          <div
-            key={q.id}
-            onClick={() => selectSong(q)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: 8,
-              cursor: state === "playing" ? "not-allowed" : "pointer",
-              opacity: state === "playing" ? 0.5 : 1,
-              borderBottom: "1px solid #eee",
-            }}
-          >
-            {/* COVER */}
-            <div style={{ width: 50 }}>
-              {q.song.coverPath ? (
-                <img
-                  src={buildCover(q.song)!}
-                  style={{ width: 50 }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: 50,
-                    height: 50,
-                    background: "#ccc",
-                  }}
-                />
-              )}
-            </div>
-
-            {/* META */}
-            <div>
-              <div>
-                {q.position}. {q.song.artist}
-              </div>
-              <div style={{ fontSize: 12 }}>
-                {q.song.title}
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="live-queue">
+        <QueueList
+          queue={session.queue}
+          disabled={state === "playing"}
+          onSelect={selectSong}
+        />
       </div>
 
       {/* MODAL – WYBÓR GRACZA */}
       {state === "selectingPlayer" && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.6)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+        <SelectPlayerModal
+          players={session.players}
+          onSelect={selectPlayer}
+          onCancel={() => {
+            setState("idle");
+            setCurrentSong(null);
+            setLyrics([]);
+            setCurrentLine(null);
           }}
-        >
-          <div style={{ background: "#fff", padding: 20 }}>
-            <h3>Wybierz gracza</h3>
-
-            {session.players.map((p) => (
-              <button
-                key={p.id}
-                style={{ display: "block", margin: 5 }}
-                onClick={() => selectPlayer(p)}
-              >
-                {p.nick}
-              </button>
-            ))}
-
-            <button
-              onClick={() => {
-                setState("idle");
-                setCurrentSong(null);
-                setLyrics([]);
-                setCurrentLine(null);
-              }}
-            >
-              Anuluj
-            </button>
-          </div>
-        </div>
+        />
       )}
     </div>
   );
+
 }

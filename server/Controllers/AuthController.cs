@@ -101,33 +101,30 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        // Walidacja emaila
         if (!request.Email.Contains("@"))
             return BadRequest(new { message = "Nieprawidłowy email" });
 
-        // Czy email jest zajęty?
-        var exists = await _db.User.AnyAsync(u => u.Email == request.Email);
-        if (exists)
+        if (await _db.User.AnyAsync(u => u.Email == request.Email))
             return BadRequest(new { message = "Konto o tym emailu już istnieje" });
 
-        // Walidacja hasła
         if (request.Password.Length < 6)
             return BadRequest(new { message = "Hasło musi mieć min. 6 znaków" });
 
-        // Hash hasła
-        var hash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+        // DOZWOLONE ROLE (demo)
+        var allowedRoles = new[] { "User", "SuperUser", "Admin" };
+        if (!allowedRoles.Contains(request.Role))
+            return BadRequest(new { message = "Nieprawidłowa rola" });
+
         var user = new User
         {
             Email = request.Email,
-            PasswordHash = hash,
-            Role = "User",
-            Sessions = new List<Session>()
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            Role = request.Role
         };
 
         _db.User.Add(user);
         await _db.SaveChangesAsync();
 
-        // JWT
         var token = GenerateJwtToken(user);
 
         Response.Cookies.Append("jwt", token, new CookieOptions

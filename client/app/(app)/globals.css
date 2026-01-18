@@ -1,0 +1,780 @@
+/* ===== RESET / BASE ===== */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  background-color: #1a1026; /* CIEMNY FIOLET */
+  color: #eae6f5;
+}
+
+/* ===== LAYOUT ===== */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: 240px;
+  padding: 20px 16px;
+  background-color: #241337; /* ciemniejszy fiolet */
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-title {
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 28px;
+  letter-spacing: 0.5px;
+}
+
+/* ===== NAV ===== */
+.sidebar nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar nav li {
+  margin-bottom: 8px;
+}
+
+.sidebar nav a {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: #d8d0ef;
+  text-decoration: none;
+  font-size: 14px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sidebar nav a:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+/* ===== CONTENT ===== */
+.main-content {
+  flex: 1;
+  padding: 24px;
+  background-color: #1a1026; /* ten sam fiolet co body */
+}
+
+/* ===== OPTIONAL: panel do wnętrza ===== */
+.panel {
+  background-color: #241337;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.sidebar-title {
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.4px;
+}
+
+.sidebar nav a {
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+
+/* songs */
+/* ===== SONGS UPLOAD PAGE ===== */
+
+.songs-page {
+  max-width: 640px;
+}
+
+.songs-page h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+/* Panel formularza */
+.upload-panel {
+  background-color: #241337;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+/* Grupa pola */
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #d6cfee;
+}
+
+/* Input */
+.form-group input[type="text"],
+.form-group input[type="file"],
+.form-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: #1a1026;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.form-group input::placeholder {
+  color: #9b8fc2;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #7c5cff;
+  box-shadow: 0 0 0 1px rgba(124, 92, 255, 0.4);
+}
+
+/* Przycisk */
+.upload-button {
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: none;
+  background-color: #7c5cff;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.upload-button:hover {
+  background-color: #6a4af2;
+}
+
+.upload-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Error / Result */
+.upload-error {
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 12px;
+  background-color: rgba(255, 80, 80, 0.12);
+  color: #ffb3b3;
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+
+.upload-result {
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 12px;
+  background-color: rgba(124, 92, 255, 0.12);
+  color: #e6ddff;
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+
+/* ===== SONGS LIST PAGE ===== */
+
+.songs-page {
+  max-width: 1200px;
+}
+
+.songs-page h1 {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+/* GÓRNE AKCJE */
+.songs-actions {
+  margin-bottom: 20px;
+}
+
+.songs-actions button {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  background-color: #7c5cff;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.songs-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* FILTRY */
+.filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.filters input,
+.filters select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background-color: #241337;
+  color: #fff;
+}
+
+.filters button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  background-color: #3b2a5a;
+  color: #fff;
+  cursor: pointer;
+}
+
+.filters button:hover {
+  background-color: #4a3570;
+}
+
+/* LISTA UTWORÓW */
+.song-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.song-cover {
+  width: 90px;
+  height: 90px;
+  border-radius: 10px;
+  background-color: #1a1026;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #9b8fc2;
+  overflow: hidden;
+}
+
+.song-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.song-meta {
+  width: 200px;
+}
+
+.song-meta-title {
+  font-weight: 600;
+}
+
+.song-meta-artist {
+  font-size: 13px;
+  color: #bfb4e6;
+}
+
+.song-lang {
+  width: 60px;
+  font-size: 13px;
+  color: #cbbfff;
+}
+
+/* AKCJE */
+.song-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.song-actions button {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: none;
+  background-color: #3b2a5a;
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.song-actions button:hover {
+  background-color: #4a3570;
+}
+
+.song-actions .danger {
+  background-color: #5a1f2a;
+}
+
+.song-actions .danger:hover {
+  background-color: #7a2735;
+}
+
+/* ===== MODAL ===== */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background-color: #241337;
+  border-radius: 16px;
+  padding: 20px;
+  min-width: 520px;
+}
+
+.modal h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.session-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: 13px;
+}
+
+.modal-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-actions button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  background-color: #3b2a5a;
+  color: #fff;
+  cursor: pointer;
+}
+
+.modal-actions button.primary {
+  background-color: #7c5cff;
+}
+
+.song-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.song-actions {
+  margin-left: auto;         
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.song-actions button {
+  white-space: nowrap;
+}
+
+/* ===== SESSIONS PAGE ===== */
+
+.sessions-page {
+  max-width: 1200px;
+}
+
+.sessions-page h1 {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+/* FILTRY + DODAWANIE */
+.sessions-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.sessions-toolbar input,
+.sessions-toolbar select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background-color: #241337;
+  color: #fff;
+}
+
+.sessions-toolbar button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  background-color: #7c5cff;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* LISTA SESJI */
+.session-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.session-name {
+  width: 200px;
+  font-weight: 600;
+}
+
+.session-meta {
+  width: 120px;
+  font-size: 13px;
+  color: #cbbfff;
+}
+
+.session-date {
+  width: 200px;
+  font-size: 13px;
+  color: #bfb4e6;
+}
+
+/* 🔥 akcje po PRAWEJ */
+.session-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.session-actions button {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: none;
+  background-color: #3b2a5a;
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.session-actions button.primary {
+  background-color: #7c5cff;
+}
+
+.session-actions button.danger {
+  background-color: #5a1f2a;
+}
+
+/* ===== MODAL EDYCJI ===== */
+
+.session-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.session-modal {
+  background-color: #241337;
+  border-radius: 16px;
+  padding: 20px;
+  min-width: 900px;
+  display: flex;
+  gap: 20px;
+}
+
+/* KOLUMNY */
+.session-column {
+  flex: 1;
+}
+
+.session-column h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+/* KOLEJKA / GRACZE */
+.queue-row,
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: 13px;
+}
+
+.queue-actions {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+/* DÓŁ MODALA */
+.session-modal-footer {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+
+/* ===== BUTTONS INSIDE SESSION MODAL ===== */
+
+.session-modal button {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: none;
+  background-color: #3b2a5a;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.session-modal button:hover {
+  background-color: #4a3570;
+}
+
+.session-modal button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* przyciski akcji (Usuń) */
+.session-modal button.danger {
+  background-color: #5a1f2a;
+}
+
+.session-modal button.danger:hover {
+  background-color: #7a2735;
+}
+
+/* przyciski góra/dół */
+.queue-actions button {
+  min-width: 36px;
+  text-align: center;
+}
+
+/* przycisk OK na dole */
+.session-modal-footer button {
+  background-color: #7c5cff;
+  font-weight: 600;
+}
+
+.session-modal-footer button:hover {
+  background-color: #6a4af2;
+}
+
+/* ===== DISABLED ACTIVATE BUTTON ===== */
+
+.session-actions button:disabled {
+  background-color: #2e2440;   /* szary fiolet */
+  color: #9b8fc2;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* wyłącz hover dla disabled */
+.session-actions button:disabled:hover {
+  background-color: #2e2440;
+}
+
+/* ===== ACTIVE SESSIONS PAGE ===== */
+
+.active-page {
+  max-width: 1200px;
+}
+
+.active-page h1 {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+/* WIERSZ SESJI */
+.active-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.active-name {
+  width: 200px;
+  font-weight: 600;
+}
+
+.active-owner {
+  width: 220px;
+  font-size: 13px;
+  color: #cbbfff;
+}
+
+.active-date {
+  width: 160px;
+  font-size: 13px;
+  color: #bfb4e6;
+}
+
+.active-meta {
+  width: 80px;
+  font-size: 13px;
+  color: #eae6f5;
+}
+
+/* 🔥 AKCJE PO PRAWEJ */
+.active-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.active-actions button {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: none;
+  background-color: #3b2a5a;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.active-actions button:hover {
+  background-color: #4a3570;
+}
+
+/* PRIMARY – ŚPIEWAJ */
+.active-actions .primary {
+  background-color: #7c5cff;
+  font-weight: 600;
+}
+
+.active-actions .primary:hover {
+  background-color: #6a4af2;
+}
+
+/* DANGER – DEAKTYWUJ */
+.active-actions .danger {
+  background-color: #5a1f2a;
+}
+
+.active-actions .danger:hover {
+  background-color: #7a2735;
+}
+
+/* ===== LIVE PAGE ===== */
+
+.live-page {
+  display: flex;
+  height: 100%;
+}
+
+/* LEWA – PLAYER */
+.live-player {
+  flex: 2;
+  padding: 20px;
+}
+
+.live-player h2 {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.player-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  color: #fff;
+  overflow: hidden;
+  border-radius: 16px;
+  background-color: #000000;
+}
+
+/* video */
+.player-container video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: brightness(0.6);
+}
+
+/* overlay */
+.player-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px;
+  pointer-events: none;
+}
+
+/* fullscreen button */
+.fullscreen-btn {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 10;
+}
+
+/* INFO POD PLAYEREM */
+.live-info {
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+/* LIVE BUTTONS */
+.live-controls {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.live-controls button {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: none;
+  background-color: #3b2a5a;
+  color: #fff;
+  cursor: pointer;
+}
+
+.live-controls button:hover {
+  background-color: #4a3570;
+}
+
+/* PRAWA – KOLEJKA */
+.live-queue {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  border-left: 1px solid rgba(255,255,255,0.08);
+}

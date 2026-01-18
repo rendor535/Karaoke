@@ -121,182 +121,146 @@ export default function SessionsPage() {
   const visible = filterSessions();
 
   return (
-    <div>
+    <div className="sessions-page">
       <h1>Sesje</h1>
 
       {role === "Admin" && (
-        <div style={{ marginBottom: 20 }}>
+        <div className="sessions-toolbar">
           <input
             placeholder="Szukaj..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
 
-          <select
-            value={mode}
-            onChange={(e) => setMode(e.target.value as any)}
-          >
+          <select value={mode} onChange={(e) => setMode(e.target.value as any)}>
             <option value="both">Użytkownik lub nazwa</option>
             <option value="user">Użytkownik</option>
             <option value="name">Nazwa</option>
           </select>
-          <button onClick={() => {AddSession()}}>Dodaj Sesje</button>
+
+          <button onClick={AddSession}>Dodaj sesję</button>
         </div>
       )}
 
+
       <div>
         {visible.map((s) => (
-          <div
-            key={s.id}
-            style={{
-              display: "flex",
-              gap: 20,
-              padding: 10,
-              borderBottom: "1px solid #ccc",
-            }}
-          >
-            <div style={{ width: 200 }}>{s.name}</div>
-            <div style={{ width: 120 }}>
-              {s.songsCount} piosenek
-            </div>
-            <div style={{ width: 120 }}>
-              {s.playersCount} graczy
-            </div>
-            <div style={{ width: 200 }}>
+          <div key={s.id} className="session-row">
+            <div className="session-name">{s.name}</div>
+            <div className="session-meta">{s.songsCount} piosenek</div>
+            <div className="session-meta">{s.playersCount} graczy</div>
+            <div className="session-date">
               {new Date(s.createdAt).toLocaleString()}
             </div>
-            <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={() => openEditSession(s.id)}>
-              Edytuj
-            </button>
 
-            <button
-              disabled={s.isActive}
-              onClick={() => activateSession(s.id)}
-            >
-              {s.isActive ? "Aktywna" : "Dodaj do aktywnych"}
-            </button>
+            <div className="session-actions">
+              <button onClick={() => openEditSession(s.id)}>Edytuj</button>
 
-            <button onClick={() => removeSession(s.id)}>
-              Usuń
-            </button>
-          </div>
+              <button
+                className="primary"
+                disabled={s.isActive}
+                onClick={() => activateSession(s.id)}
+              >
+                {s.isActive ? "Aktywna" : "Dodaj do aktywnych"}
+              </button>
 
+              <button className="danger" onClick={() => removeSession(s.id)}>
+                Usuń
+              </button>
+            </div>
           </div>
         ))}
       </div>
       {editSessionId !== null && editSession && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              background: "white",
-              padding: 20,
-              minWidth: 900,
-              display: "flex",
-              gap: 20,
-            }}
-          >
-          {/* LEWA – KOLEJKA */}
-          <div style={{ flex: 1 }}>
-            <h3>Kolejka</h3>
-            <button
-              disabled={!selectedQueueItemId}
-              onClick={async () => {
-                if (selectedQueueItemId === null) return;
-                await api.moveQueueItem(selectedQueueItemId, "up");
-                await openEditSession(editSession.id);
-              }}
-            >
-              ⬆️
-            </button>
+      <div className="session-modal-overlay">
+        <div className="session-modal">
 
-            <button
-              disabled={!selectedQueueItemId}
-              onClick={async () => {
-                if (selectedQueueItemId === null) return;
-                await api.moveQueueItem(selectedQueueItemId, "down");
-                await openEditSession(editSession.id);
-              }}
-            >
-              ⬇️
-            </button>
-            <button onClick ={() => {changeName()}}>Zmień Nazwe</button>
+          {/* LEWA – KOLEJKA */}
+          <div className="session-column">
+            <h3>Kolejka</h3>
+
+            <div className="queue-actions">
+              <button
+                disabled={!selectedQueueItemId}
+                onClick={async () => {
+                  if (selectedQueueItemId === null) return;
+                  await api.moveQueueItem(selectedQueueItemId, "up");
+                  await openEditSession(editSession.id);
+                }}
+              >
+                ⬆️
+              </button>
+
+              <button
+                disabled={!selectedQueueItemId}
+                onClick={async () => {
+                  if (selectedQueueItemId === null) return;
+                  await api.moveQueueItem(selectedQueueItemId, "down");
+                  await openEditSession(editSession.id);
+                }}
+              >
+                ⬇️
+              </button>
+
+              <button className="primary" onClick={changeName}>
+                Zmień nazwę
+              </button>
+            </div>
 
             {editSession.queue.length === 0 && (
               <p>Brak piosenek</p>
             )}
 
             {editSession.queue.map((q) => (
-              <div
-                key={q.id}
-                style={{
-                  display: "flex",
-                  gap: 10,
-                  borderBottom: "1px solid #ccc",
-                  padding: 6,
-                }}
-              >
-              <input
-                type="radio"
-                name="queueSelect"
-                checked={selectedQueueItemId === q.id}
-                onChange={() => setSelectedQueueItemId(q.id)}
-              />
+              <div key={q.id} className="queue-row">
+                <input
+                  type="radio"
+                  name="queueSelect"
+                  checked={selectedQueueItemId === q.id}
+                  onChange={() => setSelectedQueueItemId(q.id)}
+                />
 
-              <div style={{ width: 200 }}>
-                {q.song.title}
-              </div>
+                <div style={{ width: 180 }}>
+                  {q.song.title}
+                </div>
 
-              <div style={{ width: 200 }}>
-                {q.song.artist}
-              </div>
-              <button
-                onClick={() => {
-                  if (!confirm("Usunąć piosenkę z kolejki?")) return;
-                  api.deleteQueueItem(q.id).then(() => openEditSession(editSession.id));
-                }}
-              >
+                <div style={{ width: 180 }}>
+                  {q.song.artist}
+                </div>
+
+                <button className="danger" 
+                  onClick={() => {
+                    if (!confirm("Usunąć piosenkę z kolejki?")) return;
+                    api
+                      .deleteQueueItem(q.id)
+                      .then(() => openEditSession(editSession.id));
+                  }}
+                >
                   Usuń
-              </button>
+                </button>
               </div>
             ))}
           </div>
 
-
           {/* PRAWA – GRACZE */}
-          <div style={{ flex: 1 }}>
+          <div className="session-column">
             <h3>Gracze</h3>
+
             {editSession.players.length === 0 && (
               <p>Brak graczy</p>
             )}
 
             {editSession.players.map((p) => (
-              <div
-                key={p.id}
-                style={{
-                  display: "flex",
-                  gap: 10,
-                  borderBottom: "1px solid #ccc",
-                  padding: 6,
-                }}
-              >
-                <div style={{ width: 200 }}>{p.nick}</div>
-                <div style={{ width: 100 }}>{p.totalScore}</div>
+              <div key={p.id} className="player-row">
+                <div style={{ width: 180 }}>{p.nick}</div>
+                <div style={{ width: 80 }}>{p.totalScore}</div>
 
-                <button
+                <button className="danger" 
                   onClick={() => {
                     if (!confirm("Usunąć gracza?")) return;
-                    api.deleteSessionPlayer(p.id).then(() => openEditSession(editSession.id));
+                    api
+                      .deleteSessionPlayer(p.id)
+                      .then(() => openEditSession(editSession.id));
                   }}
                 >
                   Usuń
@@ -314,19 +278,18 @@ export default function SessionsPage() {
             >
               Dodaj gracza
             </button>
-            
-            {/* DÓŁ */}
-            <div style={{ bottom: 20, right: 20 }}>
+
+            <div className="session-modal-footer">
               <button onClick={() => setEditSessionId(null)}>
                 OK
               </button>
             </div>
           </div>
 
-
-          </div>
         </div>
-      )}
+      </div>
+    )}
+
     </div>
   );
 }

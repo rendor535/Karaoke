@@ -20,27 +20,20 @@ export const api = {
     return;
   },
 
-  async register(
-    email: string,
-    password: string,
-    firstName: string,
-    lastName: string
-  ) {
+  async register(email: string, password: string, role: string) {
     const res = await fetch(`${API_URL}/auth/register`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ email, password, firstName, lastName }),
+      body: JSON.stringify({ email, password, role }),
     });
 
     if (!res.ok) {
-      throw new Error("Register failed");
+      const err = await res.json();
+      throw new Error(err.message ?? "Register failed");
     }
-
-    return res.json();
   },
+
 
   // pobierz dane zalogowanego użytkownika
   async me() {
@@ -139,7 +132,7 @@ export const api = {
   },
 
   async deleteQueueItem(id: number) {
-    const res = await fetch(`${API_URL}/sessionQueueItem/${id}`, {
+    const res = await fetch(`${API_URL}/session-queue-item/${id}`, {
       method: "DELETE",
       credentials: "include",
     });
@@ -160,7 +153,7 @@ export const api = {
   },
 
   async deleteSessionPlayer(id: number) {
-    const res = await fetch(`${API_URL}/sessionPlayer/${id}`, {
+    const res = await fetch(`${API_URL}/session-player/${id}`, {
       method: "DELETE",
       credentials: "include",
     });

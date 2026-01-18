@@ -53,13 +53,12 @@ export default function SongsUploadPage() {
   }
 
   return (
-    <div>
+    <div className="songs-page">
       <h1>Upload piosenki (ZIP)</h1>
 
-      <div>
-        <div>
+      <div className="upload-panel">
+        <div className="form-group">
           <label>Nazwa folderu</label>
-          <br />
           <input
             value={folderName}
             onChange={(e) => setFolderName(e.target.value)}
@@ -67,9 +66,8 @@ export default function SongsUploadPage() {
           />
         </div>
 
-        <div>
+        <div className="form-group">
           <label>Plik ZIP</label>
-          <br />
           <input
             type="file"
             accept=".zip"
@@ -77,27 +75,29 @@ export default function SongsUploadPage() {
           />
         </div>
 
-        <div>
-          <button onClick={upload} disabled={loading}>
-            {loading ? "Wysyłanie..." : "Wyślij"}
-          </button>
-        </div>
+        <button
+          className="upload-button"
+          onClick={upload}
+          disabled={loading}
+        >
+          {loading ? "Wysyłanie..." : "Wyślij"}
+        </button>
       </div>
 
       {error && (
-        <pre style={{ color: "red" }}>
+        <div className="upload-error">
           ERROR:
           {"\n"}
           {error}
-        </pre>
+        </div>
       )}
 
       {result && (
-        <pre>
+        <div className="upload-result">
           RESULT:
           {"\n"}
           {JSON.stringify(result, null, 2)}
-        </pre>
+        </div>
       )}
     </div>
   );
