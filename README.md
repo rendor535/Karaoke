@@ -15,9 +15,13 @@ Projekt umożliwia szybkie uruchomienie środowiska developerskiego bez ręcznej
 ## Struktura projektu
 
 .
+
 ├── client/ # Frontend (Next.js)
+
 ├── api/ # Backend (ASP.NET Core)
+
 ├── docker-compose.yml
+
 └── README.md
 
 Repozytorium korzysta z seedera, który jest uruchamiany przy każdym 
