@@ -15,8 +15,9 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=app;Username=postgres;Password=postgres
       FilesRoot: /app/files
-    depends_on:
-      - db
+    depends_on: # upewnienie się, że usługa bazy danych jest gotowa przed uruchomieniem API
+      db:
+        condition: service_healthy
 
   client:
     build:
@@ -41,7 +42,11 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-
+      - pgdata:/var/lib/postgresql/data 
+    healthcheck: # sprawdzanie czy baza danych jest gotowa
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 volumes:
   pgdata:

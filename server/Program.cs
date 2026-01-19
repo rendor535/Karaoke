@@ -111,7 +111,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// DB migration + seeding wylaczony
+// DB migration + seeding wlaczony
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
