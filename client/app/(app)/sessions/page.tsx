@@ -123,7 +123,7 @@ export default function SessionsPage() {
   return (
     <div className="sessions-page">
       <h1>Sesje</h1>
-
+      <button className="add-session-btn" onClick={AddSession}>Dodaj sesję</button>
       {role === "Admin" && (
         <div className="sessions-toolbar">
           <input
@@ -138,7 +138,6 @@ export default function SessionsPage() {
             <option value="name">Nazwa</option>
           </select>
 
-          <button onClick={AddSession}>Dodaj sesję</button>
         </div>
       )}
 

@@ -85,20 +85,6 @@ public static class DbSeeder
             FolderName = "La Bella y la Bestia - Gastón (reprise)"
         };
 
-        var song3 = new Song
-        {
-            Title = "Linkin Park - Numb",
-            Artist = "Disney",
-            Language = "Spanish",
-            BPM = 220.1,
-            GAP = 22000.0,
-            TxtPath = "Linkin Park - Numb.txt",
-            AudioPath = "Linkin Park - Numb.mp3",
-            VideoPath = "Linkin Park - Numb.mp4",
-            CoverPath = "Linkin Park - Numb.jpg",
-            FolderName = "Linkin Park - Numb"
-        };
-
         var song4 = new Song
         {
             Title = "Katy Perry - Hot N Cold",
@@ -116,7 +102,6 @@ public static class DbSeeder
 
         context.Song.Add(song1);
         context.Song.Add(song2);
-        context.Song.Add(song3);
         context.Song.Add(song4);
         context.SaveChanges();
 

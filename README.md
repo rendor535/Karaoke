@@ -18,13 +18,16 @@ Projekt umożliwia szybkie uruchomienie środowiska developerskiego bez ręcznej
 
 ├── client/ # Frontend (Next.js)
 
-├── api/ # Backend (ASP.NET Core)
+├── server/ # Backend (ASP.NET Core)
+
+├── files/ # Przykładowe pliki do seedera
 
 ├── docker-compose.yml
 
 └── README.md
 
-Repozytorium korzysta z seedera, który jest uruchamiany przy każdym 
+Repozytorium korzysta z seedera, który jest uruchamiany przy każdym uruchomieniu aplikacji, aby go wyłączyć należy znaleźć linijke 
+DbSeeder.Seed(db); w Program.cs znajdującym się w folderze /server/ i ją usunąć.
 
 ## Uruchomienie projektu (poprzez Dockera)
 
@@ -38,3 +41,24 @@ docker compose up --build
 dostęp do aplikacji: 
 Frontend: http://localhost:3000/login
 Swagger: http://localhost:5159/swagger/index.html
+
+## Przykładowe konta do testowania aplikacji
+Admin:
+
+login - admin@test.com
+
+hasło - admin123
+
+
+SuperUser:
+
+login - kokos@test.com
+
+hasło - suser123
+
+
+User: 
+
+login - user1@test.com"
+
+hasło - User123!

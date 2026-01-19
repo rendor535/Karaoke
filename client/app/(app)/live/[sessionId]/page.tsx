@@ -204,8 +204,8 @@ export default function LivePage() {
       const rms = Math.sqrt(
         buffer.reduce((sum, v) => sum + v * v, 0) / buffer.length
       );
-      console.log("🎧 RMS:", rms.toFixed(4));
-      console.log("🎼 raw freq:", freq);
+      // console.log("🎧 RMS:", rms.toFixed(4));
+      // console.log("🎼 raw freq:", freq);
 
       const alpha = 0.25;
 
@@ -348,7 +348,7 @@ export default function LivePage() {
     setTimeout(() => {
       audioRef.current?.play();
       videoRef.current?.play();
-      startMicrophone();
+      // startMicrophone(); // wyłączam bo nie dziala TODO dodanie mikrofonu
     }, 0);
   }
 

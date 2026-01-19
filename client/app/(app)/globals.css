@@ -778,3 +778,41 @@ body {
   overflow-y: auto;
   border-left: 1px solid rgba(255,255,255,0.08);
 }
+
+.add-session-btn {
+  margin: 12px 0 20px 0;
+  padding: 10px 18px;
+
+  background: linear-gradient(135deg, #6f4cff, #8a6cff);
+  color: #fff;
+
+  border: none;
+  border-radius: 10px;
+
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+
+  cursor: pointer;
+  transition: 
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+
+  box-shadow: 0 6px 14px rgba(111, 76, 255, 0.25);
+}
+
+.add-session-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(111, 76, 255, 0.35);
+  background: linear-gradient(135deg, #7b5cff, #9a7cff);
+}
+
+.add-session-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 10px rgba(111, 76, 255, 0.25);
+}
+
+.add-session-btn:focus {
+  outline: none;
+}
