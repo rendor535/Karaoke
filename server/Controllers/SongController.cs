@@ -251,9 +251,12 @@ public class SongController : ControllerBase
 
     // GET /song/{id}
     // Public
-    /*
+    
     [HttpGet("{id}")]
-    [SwaggerOperation(Summary = "Szczegóły utworu")]
+    [SwaggerOperation(
+        Summary = "Szczegóły utworu",
+        Description = "Zwraca szczegóły pojedynczego utworu na podstawie jego identyfikatora"
+    )]
     public async Task<IActionResult> GetById(int id)
     {
         var song = await _db.Song
@@ -278,53 +281,7 @@ public class SongController : ControllerBase
             return NotFound();
 
         return Ok(song);
-    }*/
-    [HttpGet("{id}")]
-    [SwaggerOperation(
-        Summary = "Szczegóły utworu",
-        Description = "Zwraca szczegóły pojedynczego utworu na podstawie jego identyfikatora, używa funkcji składowanej w bazie danych."
-    )]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(int id)
-    {
-        await using var conn = _db.Database.GetDbConnection();
-        await conn.OpenAsync();
-
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT * FROM get_song_by_id(@id)";
-
-        var param = cmd.CreateParameter();
-        param.ParameterName = "id";
-        param.Value = id;
-        cmd.Parameters.Add(param);
-
-        await using var reader = await cmd.ExecuteReaderAsync();
-
-        if (!await reader.ReadAsync())
-            return NotFound();
-
-        var song = new SongDetailsDto
-        {
-            Id = reader.GetInt32(reader.GetOrdinal("id")),
-            Title = reader.GetString(reader.GetOrdinal("title")),
-            Artist = reader.GetString(reader.GetOrdinal("artist")),
-            Language = reader.GetString(reader.GetOrdinal("language")),
-            BPM = reader.GetDouble(reader.GetOrdinal("bpm")),
-            GAP = reader.GetDouble(reader.GetOrdinal("gap")),
-            TxtPath = reader.GetString(reader.GetOrdinal("txt_path")),
-            AudioPath = reader.GetString(reader.GetOrdinal("audio_path")),
-            VideoPath = reader.GetString(reader.GetOrdinal("video_path")),
-            CoverPath = reader.GetString(reader.GetOrdinal("cover_path")),
-            FolderName = reader.GetString(reader.GetOrdinal("folder_name"))
-        };
-
-        if (song == null)
-            return NotFound();
-
-        return Ok(song);
     }
-
     
     // raczej nie uzyje tego, bo zmiana jest ciezka, raczej samo ma sie ustawiac
     // PATCH /song/{id}
