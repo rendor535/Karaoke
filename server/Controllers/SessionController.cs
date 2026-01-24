@@ -5,7 +5,7 @@ using server.Data;
 using server.Models;
 using server.DTOs;
 using System.Security.Claims;
-
+using Swashbuckle.AspNetCore.Annotations;
 
 [ApiController]
 [Route("session")]
@@ -22,6 +22,12 @@ public class SessionController : ControllerBase
     // Utwórz sesję
     [Authorize]
     [HttpPost]
+    [SwaggerOperation(
+        Summary = "Utwórz sesję",
+        Description = "Tworzy nową sesję karaoke przypisaną do zalogowanego użytkownika."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] CreateSessionRequest request)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -45,6 +51,14 @@ public class SessionController : ControllerBase
 
     [Authorize]
     [HttpPost("{id}/activate")]
+    [SwaggerOperation(
+        Summary = "Aktywuj sesję",
+        Description = "Ustawia sesję jako aktywną (LIVE)."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ActivateSession(int id)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -69,6 +83,14 @@ public class SessionController : ControllerBase
 
     [Authorize]
     [HttpPost("{id}/disable")]
+    [SwaggerOperation(
+        Summary = "Dezaktywuj sesję",
+        Description = "Wyłącza aktywną sesję karaoke."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DisableSession(int id)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -92,6 +114,14 @@ public class SessionController : ControllerBase
     // Dodaj gracza (nick)
     [Authorize]
     [HttpPost("{sessionId}/add-player")]
+    [SwaggerOperation(
+        Summary = "Dodaj gracza do sesji",
+        Description = "Dodaje nowego gracza (nick) do sesji karaoke."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> AddPlayer(int sessionId, [FromBody] string nick)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -127,6 +157,14 @@ public class SessionController : ControllerBase
     // Dodaj piosenkę do kolejki
     [Authorize]
     [HttpPost("{sessionId}/add-song")]
+    [SwaggerOperation(
+        Summary = "Dodaj utwór do kolejki",
+        Description = "Dodaje wybrany utwór do kolejki sesji karaoke."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> AddSongToQueue(int sessionId, [FromBody] int songId)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -165,6 +203,14 @@ public class SessionController : ControllerBase
     // Pobierz sesję z kolejką i graczami
     [Authorize]
     [HttpGet("{sessionId}")]
+    [SwaggerOperation(
+        Summary = "Pobierz sesję",
+        Description = "Zwraca szczegóły sesji wraz z graczami i kolejką utworów."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetSession(int sessionId)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -217,6 +263,14 @@ public class SessionController : ControllerBase
     // update session name, nw czy bedzie uzywane
     [Authorize]
     [HttpPatch("{sessionId}")]
+    [SwaggerOperation(
+        Summary = "Aktualizuj sesję",
+        Description = "Aktualizuje nazwę sesji karaoke."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(int sessionId, [FromBody] CreateSessionRequest request)
     {
         var userId = GetUserId();
@@ -244,6 +298,14 @@ public class SessionController : ControllerBase
     // usuwanie sesji i wszystkich powiązań
     [Authorize]
     [HttpDelete("{sessionId}")]
+    [SwaggerOperation(
+        Summary = "Usuń sesję",
+        Description = "Usuwa sesję karaoke wraz z graczami i kolejką."
+    )]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int sessionId)
     {
         var userId = GetUserId();
@@ -276,6 +338,12 @@ public class SessionController : ControllerBase
     // GET /session?page=1&pageSize=10
     [Authorize]
     [HttpGet]
+    [SwaggerOperation(
+        Summary = "Lista sesji",
+        Description = "Zwraca listę sesji (z paginacją) karaoke dostępnych dla użytkownika."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10
@@ -348,6 +416,12 @@ public class SessionController : ControllerBase
     // Lista aktywnych sesji karaoke (LIVE)
     [Authorize]
     [HttpGet("active")]
+    [SwaggerOperation(
+        Summary = "Aktywne sesje",
+        Description = "Zwraca listę aktualnie aktywnych sesji karaoke."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetActiveSessions()
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);

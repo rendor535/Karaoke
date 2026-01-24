@@ -30,6 +30,12 @@ public class AuthController : ControllerBase
         this._config = config;
     }
     [HttpPost("login")]
+    [SwaggerOperation(
+        Summary = "Logowanie użytkownika",
+        Description = "Uwierzytelnia użytkownika i zapisuje token JWT w ciasteczku."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var user = await _db.User
@@ -85,6 +91,11 @@ public class AuthController : ControllerBase
     }
     
     [HttpPost("logout")]
+    [SwaggerOperation(
+        Summary = "Wylogowanie",
+        Description = "Usuwa token JWT zapisany w ciasteczku."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult Logout()
     {
         Response.Cookies.Append("jwt", "", new CookieOptions
@@ -99,6 +110,12 @@ public class AuthController : ControllerBase
         return Ok(new { success = true, message = "Wylogowano!" });
     }
     [HttpPost("register")]
+    [SwaggerOperation(
+        Summary = "Rejestracja użytkownika",
+        Description = "Tworzy nowe konto użytkownika i automatycznie loguje."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         if (!request.Email.Contains("@"))

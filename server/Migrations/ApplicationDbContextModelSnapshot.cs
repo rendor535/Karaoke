@@ -50,7 +50,7 @@ namespace server.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Session");
+                    b.ToTable("Session", (string)null);
                 });
 
             modelBuilder.Entity("server.Models.SessionPlayer", b =>
@@ -75,7 +75,7 @@ namespace server.Migrations
 
                     b.HasIndex("SessionId");
 
-                    b.ToTable("SessionPlayer");
+                    b.ToTable("SessionPlayer", (string)null);
                 });
 
             modelBuilder.Entity("server.Models.SessionQueueItem", b =>
@@ -104,7 +104,7 @@ namespace server.Migrations
 
                     b.HasIndex("SongId");
 
-                    b.ToTable("SessionQueueItem");
+                    b.ToTable("SessionQueueItem", (string)null);
                 });
 
             modelBuilder.Entity("server.Models.Song", b =>
@@ -155,7 +155,7 @@ namespace server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Song");
+                    b.ToTable("Song", (string)null);
                 });
 
             modelBuilder.Entity("server.Models.User", b =>
@@ -180,7 +180,7 @@ namespace server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("User");
+                    b.ToTable("User", (string)null);
                 });
 
             modelBuilder.Entity("server.Models.Session", b =>

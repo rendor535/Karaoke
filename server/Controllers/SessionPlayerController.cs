@@ -5,6 +5,7 @@ using server.Data;
 using server.Models;
 using server.DTOs;
 using System.Security.Claims;
+using Swashbuckle.AspNetCore.Annotations;
 
 [ApiController]
 [Route("session-player")]
@@ -21,6 +22,14 @@ public class SessionPlayerController : ControllerBase
     
     [Authorize]
     [HttpGet("{id}")]
+    [SwaggerOperation(
+        Summary = "Pobierz gracza sesji",
+        Description = "Zwraca dane pojedynczego gracza przypisanego do sesji."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Get(int id)
     {
         var player = await _db.SessionPlayer
@@ -45,6 +54,14 @@ public class SessionPlayerController : ControllerBase
     // READ ALL FOR SESSION
     [Authorize]
     [HttpGet("session/{sessionId}")]
+    [SwaggerOperation(
+        Summary = "Lista graczy w sesji",
+        Description = "Zwraca listę graczy przypisanych do wskazanej sesji."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetForSession(int sessionId)
     {
         var session = await _db.Session.FirstOrDefaultAsync(s => s.Id == sessionId);
@@ -70,6 +87,14 @@ public class SessionPlayerController : ControllerBase
     // UPDATE
     [Authorize]
     [HttpPatch("{id}")]
+    [SwaggerOperation(
+        Summary = "Aktualizuj gracza",
+        Description = "Aktualizuje dane gracza w sesji (nick lub wynik)."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateSessionPlayerRequest request)
     {
         var player = await _db.SessionPlayer
@@ -101,6 +126,14 @@ public class SessionPlayerController : ControllerBase
     // DELETE
     [Authorize]
     [HttpDelete("{id}")]
+    [SwaggerOperation(
+        Summary = "Usuń gracza z sesji",
+        Description = "Usuwa gracza z sesji karaoke."
+    )]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
     {
         var player = await _db.SessionPlayer

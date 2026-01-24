@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using server.Models;
+using server.DTOs;
 
 namespace server.Data;
 
@@ -45,5 +46,10 @@ public class ApplicationDbContext : DbContext
             .WithMany(s => s.SessionQueueItems)
             .HasForeignKey(q => q.SongId)
             .OnDelete(DeleteBehavior.Restrict);
+            
+        modelBuilder.Entity<SongDetailsDto>()
+            .HasNoKey()
+            .ToView(null);
     }
+
 }

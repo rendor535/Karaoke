@@ -5,6 +5,7 @@ using server.Data;
 using server.Models;
 using server.DTOs;
 using System.Security.Claims;
+using Swashbuckle.AspNetCore.Annotations;
 
 [ApiController]
 [Route("session-queue-item")]
@@ -61,6 +62,14 @@ public class SessionQueueItemController : ControllerBase
     */
     // GET - jeden item
     [HttpGet("{id}")]
+    [SwaggerOperation(
+        Summary = "Pobierz element kolejki",
+        Description = "Zwraca szczegóły pojedynczego elementu kolejki dla danej sesji."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Get(int id)
     {
         var item = await _db.SessionQueueItem
@@ -125,6 +134,15 @@ public class SessionQueueItemController : ControllerBase
     */
     // POST /sessionQueueItem/{id}/move
     [HttpPost("{id}/move")]
+    [SwaggerOperation(
+        Summary = "Zmień pozycję w kolejce",
+        Description = "Przesuwa element kolejki w górę lub w dół."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Move(int id, [FromBody] string direction)
     {
         var item = await _db.SessionQueueItem
@@ -166,6 +184,14 @@ public class SessionQueueItemController : ControllerBase
 
     // DELETE - usuń item z kolejki
     [HttpDelete("{id}")]
+    [SwaggerOperation(
+        Summary = "Usuń element kolejki",
+        Description = "Usuwa element z kolejki sesji i aktualizuje pozycje pozostałych elementów."
+    )]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
     {
         var item = await _db.SessionQueueItem

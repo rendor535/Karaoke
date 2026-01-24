@@ -51,6 +51,14 @@ public class SongController : ControllerBase
     [Authorize(Roles = "Admin,Superuser")]
     [HttpPost("upload-folder")]
     [Consumes("multipart/form-data")]
+    [SwaggerOperation(
+        Summary = "Dodaj utwór z folderu",
+        Description = "Dodaje nowy utwór na podstawie archiwum ZIP zawierającego pliki audio, tekst oraz opcjonalnie okładkę i wideo."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> UploadFolder(
         [FromForm] SongUploadZipRequest request
     )
@@ -170,7 +178,11 @@ public class SongController : ControllerBase
     // GET /song
     // Public
     [HttpGet]
-    [SwaggerOperation(Summary = "Lista utworów")]
+    [SwaggerOperation(
+        Summary = "Lista utworów",
+        Description = "Zwraca listę utworów z możliwością filtrowania i paginacji."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? q,
         [FromQuery] string? language,
@@ -239,6 +251,7 @@ public class SongController : ControllerBase
 
     // GET /song/{id}
     // Public
+    /*
     [HttpGet("{id}")]
     [SwaggerOperation(Summary = "Szczegóły utworu")]
     public async Task<IActionResult> GetById(int id)
@@ -265,13 +278,66 @@ public class SongController : ControllerBase
             return NotFound();
 
         return Ok(song);
+    }*/
+    [HttpGet("{id}")]
+    [SwaggerOperation(
+        Summary = "Szczegóły utworu",
+        Description = "Zwraca szczegóły pojedynczego utworu na podstawie jego identyfikatora, używa funkcji składowanej w bazie danych."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetById(int id)
+    {
+        await using var conn = _db.Database.GetDbConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT * FROM get_song_by_id(@id)";
+
+        var param = cmd.CreateParameter();
+        param.ParameterName = "id";
+        param.Value = id;
+        cmd.Parameters.Add(param);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+
+        if (!await reader.ReadAsync())
+            return NotFound();
+
+        var song = new SongDetailsDto
+        {
+            Id = reader.GetInt32(reader.GetOrdinal("id")),
+            Title = reader.GetString(reader.GetOrdinal("title")),
+            Artist = reader.GetString(reader.GetOrdinal("artist")),
+            Language = reader.GetString(reader.GetOrdinal("language")),
+            BPM = reader.GetDouble(reader.GetOrdinal("bpm")),
+            GAP = reader.GetDouble(reader.GetOrdinal("gap")),
+            TxtPath = reader.GetString(reader.GetOrdinal("txt_path")),
+            AudioPath = reader.GetString(reader.GetOrdinal("audio_path")),
+            VideoPath = reader.GetString(reader.GetOrdinal("video_path")),
+            CoverPath = reader.GetString(reader.GetOrdinal("cover_path")),
+            FolderName = reader.GetString(reader.GetOrdinal("folder_name"))
+        };
+
+        if (song == null)
+            return NotFound();
+
+        return Ok(song);
     }
+
+    
     // raczej nie uzyje tego, bo zmiana jest ciezka, raczej samo ma sie ustawiac
     // PATCH /song/{id}
     // Admin / Superuser
     [Authorize(Roles = "Admin,Superuser")]
     [HttpPatch("{id}")]
-    [SwaggerOperation(Summary = "Aktualizuj utwór")]
+    [SwaggerOperation(
+        Summary = "Aktualizuj utwór",
+        Description = "Aktualizuje wybrane dane utworu."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Update(int id, [FromBody] Song dto)
     {
         var song = await _db.Song.FindAsync(id);
@@ -308,7 +374,13 @@ public class SongController : ControllerBase
     // Admin only
     [Authorize(Roles = "Admin, Superuser")]
     [HttpDelete("{id}")]
-    [SwaggerOperation(Summary = "Usuń utwór")]
+    [SwaggerOperation(
+        Summary = "Usuń utwór",
+        Description = "Usuwa utwór z bazy danych oraz powiązane pliki z systemu plików."
+    )]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Delete(int id)
     {
         var song = await _db.Song.FindAsync(id);
