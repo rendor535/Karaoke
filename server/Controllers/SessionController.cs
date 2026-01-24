@@ -338,79 +338,92 @@ public class SessionController : ControllerBase
     // GET /session?page=1&pageSize=10
     [Authorize]
     [HttpGet]
-    [SwaggerOperation(
-        Summary = "Lista sesji",
-        Description = "Zwraca listę sesji (z paginacją) karaoke dostępnych dla użytkownika."
-    )]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [SwaggerOperation( Summary = "Lista sesji", 
+        Description = "Zwraca listę sesji (z paginacją) karaoke dostępnych dla użytkownika, występuje paginacja dla administratora." )]
+    [ProducesResponseType(StatusCodes.Status200OK)] 
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10
     )
     {
-    var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-    var role = User.FindFirstValue(ClaimTypes.Role);
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var role = User.FindFirstValue(ClaimTypes.Role);
 
-    IQueryable<Session> query = _db.Session;
+        IQueryable<Session> query = _db.Session;
 
-    // USER/SUPERUSER - tylko swoje sesje
-    if (role != "Admin")
-    {
-        query = query.Where(s => s.UserId == userId);
-    }
-
-    // ADMIN - wszystkie sesje + paginacja
-    if (role == "Admin")
-    {
-        query = query
-            .OrderByDescending(s => s.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize);
-    }
-    else
-    {
-        query = query.OrderByDescending(s => s.CreatedAt);
-    }
-
-    var sessions = await query
-        .Select(s => new
+        if (role != "Admin")
         {
-            s.Id,
-            s.Name,
-            s.CreatedAt,
-            s.IsActive,
-            Owner = new
+            query = query.Where(s => s.UserId == userId);
+        }
+
+        int? totalCount = null;
+        if (role == "Admin")
+        {
+            totalCount = await query.CountAsync();
+
+            query = query
+                .OrderByDescending(s => s.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize);
+        }
+        else
+        {
+            query = query.OrderByDescending(s => s.CreatedAt);
+        }
+
+        var sessions = await query
+            .Select(s => new
             {
-                s.User.Id,
-                s.User.Email
-            },
-            PlayersCount = s.Players.Count(),
-            SongsCount = s.Queue.Count(),
-            Players = s.Players.Select(p => new
-            {
-                p.Id,
-                p.Nick,
-                p.TotalScore
-            }),
-            Queue = s.Queue
-                .OrderBy(q => q.Position)
-                .Select(q => new
+                s.Id,
+                s.Name,
+                s.CreatedAt,
+                s.IsActive,
+                Owner = new
                 {
-                    q.Id,
-                    q.Position,
-                    Song = new
-                    {
-                        q.Song.Id,
-                        q.Song.Title,
-                        q.Song.Artist,
-                        q.Song.Language
-                    }
+                    s.User.Id,
+                    s.User.Email
+                },
+                PlayersCount = s.Players.Count(),
+                SongsCount = s.Queue.Count(),
+                Players = s.Players.Select(p => new
+                {
+                    p.Id,
+                    p.Nick,
+                    p.TotalScore
                 }),
+                Queue = s.Queue
+                    .OrderBy(q => q.Position)
+                    .Select(q => new
+                    {
+                        q.Id,
+                        q.Position,
+                        Song = new
+                        {
+                            q.Song.Id,
+                            q.Song.Title,
+                            q.Song.Artist,
+                            q.Song.Language
+                        }
+                    }),
             })
-        .ToListAsync();
+            .ToListAsync();
+
+        // 👉 MINIMALNA ZMIANA RESPONSE
+        if (role == "Admin")
+        {
+            return Ok(new
+            {
+                items = sessions,
+                page,
+                pageSize,
+                totalCount
+            });
+        }
+
         return Ok(sessions);
     }
+
 
     // GET /session/active
     // Lista aktywnych sesji karaoke (LIVE)
