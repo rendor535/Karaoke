@@ -409,7 +409,6 @@ public class SessionController : ControllerBase
             })
             .ToListAsync();
 
-        // 👉 MINIMALNA ZMIANA RESPONSE
         if (role == "Admin")
         {
             return Ok(new

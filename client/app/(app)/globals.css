@@ -816,3 +816,45 @@ body {
 .add-session-btn:focus {
   outline: none;
 }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  margin: 20px 0;
+}
+
+.pagination button {
+  min-width: 42px;
+  height: 36px;
+
+  background: #1e1e2e;
+  color: #fff;
+
+  border: 1px solid #3a3a55;
+  border-radius: 6px;
+
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: #2a2a45;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pagination span {
+  color: #cfcfe8;
+  font-size: 14px;
+  min-width: 120px;
+  text-align: center;
+}

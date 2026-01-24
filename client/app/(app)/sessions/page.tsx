@@ -48,17 +48,31 @@ export default function SessionsPage() {
   const [editLoading, setEditLoading] = useState(false);
   const [selectedQueueItemId, setSelectedQueueItemId] = useState<number | null>(null);
 
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState<number | null>(null);
+
   useEffect(() => {
     load();
   }, []);
 
-  async function load() {
+  async function load(p = page) {
     const me = await api.me();
     setRole(me.role);
 
-    const data = await api.getSessions();
-    setSessions(data);
+    const data = await api.getSessions(p, pageSize);
+
+    if (me.role === "Admin" && data.items) {
+      setSessions(data.items);
+      setTotalCount(data.totalCount);
+      setPage(data.page);
+    }
+    else {
+      setSessions(data);
+      setTotalCount(null);
+    }
   }
+
   // przyciski edycji i usuwania
   function filterSessions(): Session[] {
     if (role !== "Admin") return sessions;
@@ -170,6 +184,28 @@ export default function SessionsPage() {
           </div>
         ))}
       </div>
+      {role === "Admin" && totalCount !== null && (
+      <div className="pagination">
+        <button
+          disabled={page === 1}
+          onClick={() => load(page - 1)}
+        >
+          ◀
+        </button>
+
+        <span>
+          Strona {page} / {Math.ceil(totalCount / pageSize)}
+        </span>
+
+        <button
+          disabled={page >= Math.ceil(totalCount / pageSize)}
+          onClick={() => load(page + 1)}
+        >
+          ▶
+        </button>
+      </div>
+    )}
+
       {editSessionId !== null && editSession && (
       <div className="session-modal-overlay">
         <div className="session-modal">
