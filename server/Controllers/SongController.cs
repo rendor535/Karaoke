@@ -48,6 +48,35 @@ public class SongController : ControllerBase
 
     // POST /song           
     // Admin / Superuser
+    /// <summary>
+    /// Dodaj utwór z folderu
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request (multipart/form-data):
+    ///
+    /// folderName = "ABBA - Money Money Money"
+    /// zip = (plik) ABBA - Money Money Money.zip
+    ///
+    /// Zawartość ZIP:
+    /// - ABBA - Money Money Money.mp3
+    /// - ABBA - Money Money Money.txt
+    /// - ABBA - Money Money Money.jpg
+    /// - ABBA - Money Money Money.mp4
+    ///
+    /// Przykładowy response:
+    /// {
+    ///   "id": 1,
+    ///   "title": "Money Money Money",
+    ///   "artist": "ABBA",
+    ///   "language": "English",
+    ///   "bpm": 339.2,
+    ///   "gap": 12116.75,
+    ///   "audioPath": "ABBA - Money Money Money.mp3",
+    ///   "txtPath": "ABBA - Money Money Money.txt",
+    ///   "coverPath": "ABBA - Money Money Money.jpg",
+    ///   "videoPath": "ABBA - Money Money Money.mp4"
+    /// }
+    /// </remarks>
     [Authorize(Roles = "Admin,Superuser")]
     [HttpPost("upload-folder")]
     [Consumes("multipart/form-data")]
@@ -177,6 +206,34 @@ public class SongController : ControllerBase
 
     // GET /song
     // Public
+    /// <summary>
+    /// Lista utworów
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// GET /song?q=abba&searchBy=artist&page=1&limit=10
+    ///
+    /// Przykładowy response:
+    /// {
+    ///   "data": [
+    ///     {
+    ///       "id": 1,
+    ///       "title": "Money Money Money",
+    ///       "artist": "ABBA",
+    ///       "language": "English",
+    ///       "bpm": 339.2,
+    ///       "gap": 12116.75,
+    ///       "coverPath": "ABBA - Money Money Money.jpg",
+    ///       "folderName": "ABBA - Money Money Money"
+    ///     }
+    ///   ],
+    ///   "page": 1,
+    ///   "limit": 10,
+    ///   "total": 1,
+    ///   "totalPages": 1
+    /// }
+    /// </remarks>
     [HttpGet]
     [SwaggerOperation(
         Summary = "Lista utworów",
@@ -251,7 +308,29 @@ public class SongController : ControllerBase
 
     // GET /song/{id}
     // Public
-    
+    /// <summary>
+    /// Szczegóły utworu
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// GET /song/1
+    ///
+    /// Przykładowy response:
+    /// {
+    ///   "id": 1,
+    ///   "title": "Money Money Money",
+    ///   "artist": "ABBA",
+    ///   "language": "English",
+    ///   "bpm": 339.2,
+    ///   "gap": 12116.75,
+    ///   "txtPath": "ABBA - Money Money Money.txt",
+    ///   "audioPath": "ABBA - Money Money Money.mp3",
+    ///   "videoPath": "ABBA - Money Money Money.mp4",
+    ///   "coverPath": "ABBA - Money Money Money.jpg",
+    ///   "folderName": "ABBA - Money Money Money"
+    /// }
+    /// </remarks>
     [HttpGet("{id}")]
     [SwaggerOperation(
         Summary = "Szczegóły utworu",
@@ -286,6 +365,28 @@ public class SongController : ControllerBase
     // raczej nie uzyje tego, bo zmiana jest ciezka, raczej samo ma sie ustawiac
     // PATCH /song/{id}
     // Admin / Superuser
+    /// <summary>
+    /// Aktualizuj utwór
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// PATCH /song/1
+    /// {
+    ///   "title": "Money Money Money (Remastered)",
+    ///   "language": "EN"
+    /// }
+    ///
+    /// Przykładowy response:
+    /// {
+    ///   "id": 1,
+    ///   "title": "Money Money Money (Remastered)",
+    ///   "artist": "ABBA",
+    ///   "language": "EN",
+    ///   "bpm": 339.2,
+    ///   "gap": 12116.75
+    /// }
+    /// </remarks>
     [Authorize(Roles = "Admin,Superuser")]
     [HttpPatch("{id}")]
     [SwaggerOperation(
@@ -329,6 +430,17 @@ public class SongController : ControllerBase
 
     // DELETE /song/{id}
     // Admin only
+    /// <summary>
+    /// Usuń utwór
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// DELETE /song/1
+    ///
+    /// Przykładowy response:
+    /// HTTP 204 No Content
+    /// </remarks>
     [Authorize(Roles = "Admin, Superuser")]
     [HttpDelete("{id}")]
     [SwaggerOperation(

@@ -20,6 +20,22 @@ public class SessionPlayerController : ControllerBase
     private string Role =>
         User.FindFirstValue(ClaimTypes.Role)!;
     
+    /// <summary>
+    /// Pobierz gracza sesji
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// GET /session-player/1
+    ///
+    /// Przykładowy response:
+    /// {
+    ///   "id": 1,
+    ///   "nick": "PlayerOne",
+    ///   "totalScore": 1200,
+    ///   "sessionId": 1
+    /// }
+    /// </remarks>
     [Authorize]
     [HttpGet("{id}")]
     [SwaggerOperation(
@@ -51,7 +67,28 @@ public class SessionPlayerController : ControllerBase
         });
     }
 
-    // READ ALL FOR SESSION
+    /// <summary>
+    /// Lista graczy w sesji
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// GET /session-player/session/1
+    ///
+    /// Przykładowy response:
+    /// [
+    ///   {
+    ///     "id": 1,
+    ///     "nick": "PlayerOne",
+    ///     "totalScore": 1200
+    ///   },
+    ///   {
+    ///     "id": 2,
+    ///     "nick": "PlayerTwo",
+    ///     "totalScore": 950
+    ///   }
+    /// ]
+    /// </remarks>
     [Authorize]
     [HttpGet("session/{sessionId}")]
     [SwaggerOperation(
@@ -84,7 +121,25 @@ public class SessionPlayerController : ControllerBase
         return Ok(players);
     }
 
-    // UPDATE
+    /// <summary>
+    /// Aktualizuj gracza
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// PATCH /session-player/1
+    /// {
+    ///   "nick": "PlayerOneUpdated",
+    ///   "totalScore": 1500
+    /// }
+    ///
+    /// Przykładowy response:
+    /// {
+    ///   "id": 1,
+    ///   "nick": "PlayerOneUpdated",
+    ///   "totalScore": 1500
+    /// }
+    /// </remarks>
     [Authorize]
     [HttpPatch("{id}")]
     [SwaggerOperation(
@@ -123,7 +178,17 @@ public class SessionPlayerController : ControllerBase
         });
     }
 
-    // DELETE
+    /// <summary>
+    /// Usuń gracza z sesji
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// DELETE /session-player/1
+    ///
+    /// Przykładowy response:
+    /// HTTP 204 No Content
+    /// </remarks>
     [Authorize]
     [HttpDelete("{id}")]
     [SwaggerOperation(

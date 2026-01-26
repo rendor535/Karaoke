@@ -3,6 +3,7 @@ import { twMerge } from 'tailwind-merge';
 import axios from 'axios';
 import https from 'https';
 
+// nieuzywane w sumie te axiosy, ale w przyszłości można wykorzystać
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }

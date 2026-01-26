@@ -26,41 +26,35 @@ public class SessionQueueItemController : ControllerBase
         return IsAdmin || session.UserId == UserId;
     }
 
-    // POST — dodaj item do kolejki (alternatywa dla /session/{id}/add-song), nwm chyba do usuniiecia 
-    /*
-    [HttpPost]
-    public async Task<IActionResult> Create(int sessionId, int songId)
-    {
-        var session = await _db.Session.FirstOrDefaultAsync(s => s.Id == sessionId);
-        if (session == null)
-            return NotFound("Session not found");
-
-        if (!HasAccess(session))
-            return Forbid();
-
-        var position = await _db.SessionQueueItem
-            .CountAsync(q => q.SessionId == sessionId) + 1;
-
-        var item = new SessionQueueItem
-        {
-            SessionId = sessionId,
-            SongId = songId,
-            Position = position
-        };
-
-        _db.SessionQueueItem.Add(item);
-        await _db.SaveChangesAsync();
-
-        return Ok(new
-        {
-            item.Id,
-            item.SessionId,
-            item.SongId,
-            item.Position
-        });
-    }
-    */
     // GET - jeden item
+    /// <summary>
+    /// Pobierz element kolejki
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// GET /session-queue-item/1
+    ///
+    /// Przykładowy response:
+    /// {
+    ///   "id": 1,
+    ///   "position": 2,
+    ///   "addedAt": "2026-01-24T18:10:00Z",
+    ///   "song": {
+    ///     "id": 3,
+    ///     "title": "Money Money Money",
+    ///     "artist": "ABBA",
+    ///     "language": "English",
+    ///     "bpm": 339.2,
+    ///     "gap": 12116.75,
+    ///     "coverPath": "ABBA - Money Money Money [CO].jpg",
+    ///     "folderName": "ABBA - Money Money Money",
+    ///     "audioPath": "ABBA - Money Money Money.mp3",
+    ///     "txtPath": "ABBA - Money Money Money.txt",
+    ///     "videoPath": "ABBA - Money Money Money.mp4"
+    ///   }
+    /// }
+    /// </remarks>
     [HttpGet("{id}")]
     [SwaggerOperation(
         Summary = "Pobierz element kolejki",
@@ -105,34 +99,24 @@ public class SessionQueueItemController : ControllerBase
         });
     }
 
-    // PATCH - zmiana pozycji (np. reorder)
-    /*
-    [HttpPatch("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateQueueItemRequest request)
-    {
-        var item = await _db.SessionQueueItem
-            .Include(q => q.Session)
-            .FirstOrDefaultAsync(q => q.Id == id);
 
-        if (item == null)
-            return NotFound();
-
-        if (!HasAccess(item.Session))
-            return Forbid();
-
-        if (request.Position.HasValue && request.Position > 0)
-            item.Position = request.Position.Value;
-
-        await _db.SaveChangesAsync();
-
-        return Ok(new
-        {
-            item.Id,
-            item.Position
-        });
-    }
-    */
     // POST /sessionQueueItem/{id}/move
+    /// <summary>
+    /// Zmień pozycję w kolejce
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// POST /session-queue-item/5/move
+    /// "up"
+    ///
+    /// lub
+    ///
+    /// "down"
+    ///
+    /// Przykładowy response:
+    /// HTTP 200 OK
+    /// </remarks>
     [HttpPost("{id}/move")]
     [SwaggerOperation(
         Summary = "Zmień pozycję w kolejce",
@@ -183,6 +167,17 @@ public class SessionQueueItemController : ControllerBase
     }
 
     // DELETE - usuń item z kolejki
+    /// <summary>
+    /// Usuń element kolejki
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// DELETE /session-queue-item/5
+    ///
+    /// Przykładowy response:
+    /// HTTP 204 No Content
+    /// </remarks>
     [HttpDelete("{id}")]
     [SwaggerOperation(
         Summary = "Usuń element kolejki",
@@ -225,37 +220,4 @@ public class SessionQueueItemController : ControllerBase
         return NoContent();
     }
 
-    /*
-    // GET - kolejka dla sesji
-    [HttpGet("session/{sessionId}")]
-    public async Task<IActionResult> GetForSession(int sessionId)
-    {
-        var session = await _db.Session.FirstOrDefaultAsync(s => s.Id == sessionId);
-        if (session == null)
-            return NotFound();
-
-        if (!HasAccess(session))
-            return Forbid();
-
-        var queue = await _db.SessionQueueItem
-            .Where(q => q.SessionId == sessionId)
-            .OrderBy(q => q.Position)
-            .Include(q => q.Song)
-            .Select(q => new
-            {
-                q.Id,
-                q.Position,
-                Song = new
-                {
-                    q.Song.Id,
-                    q.Song.Title,
-                    q.Song.Artist,
-                    q.Song.Language
-                }
-            })
-            .ToListAsync();
-
-        return Ok(queue);
-    }
-    */
 }

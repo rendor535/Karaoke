@@ -20,36 +20,44 @@ public class UserController : ControllerBase
         _db = db;
     }
 
-    /*
-    // GET /user/{id}
-    [Authorize]
-    [HttpGet("{id}")]
-    [SwaggerOperation(Summary = "Pobierz użytkownika po ID")]
-    public async Task<IActionResult> GetById(int id)
-    {
-        var callerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var callerRole = User.FindFirstValue(ClaimTypes.Role);
-
-        if (callerRole != "Admin" && callerId != id)
-            return Forbid();
-
-        var user = await _db.User
-            .Where(u => u.Id == id)
-            .Select(u => new
-            {
-                u.Id,
-                u.Email,
-                u.Role
-            })
-            .FirstOrDefaultAsync();
-
-        if (user == null)
-            return NotFound();
-
-        return Ok(user);
-    }
-    */
     // GET /user/me
+    /// <summary>
+    /// Pobierz aktualnego użytkownika
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// GET /user/me
+    ///
+    /// Przykładowy response:
+    /// {
+    ///   "id": 2,
+    ///   "email": "kokos@test.com",
+    ///   "role": "Superuser",
+    ///   "sessions": [
+    ///     {
+    ///       "id": 1,
+    ///       "name": "Test Session",
+    ///       "createdAt": "2026-01-24T17:30:00Z",
+    ///       "players": [
+    ///         { "id": 1, "nick": "PlayerOne", "totalScore": 1200 }
+    ///       ],
+    ///       "queue": [
+    ///         {
+    ///           "id": 1,
+    ///           "position": 1,
+    ///           "song": {
+    ///             "id": 3,
+    ///             "title": "Money Money Money",
+    ///             "artist": "ABBA",
+    ///             "language": "English"
+    ///           }
+    ///         }
+    ///       ]
+    ///     }
+    ///   ]
+    /// }
+    /// </remarks>
     [Authorize]
     [HttpGet("me")]
     [SwaggerOperation(
@@ -110,6 +118,22 @@ public class UserController : ControllerBase
     }
     
     // GET /user/{id}
+    /// <summary>
+    /// Pobierz użytkownika po ID
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// GET /user/2
+    ///
+    /// Przykładowy response:
+    /// {
+    ///   "id": 2,
+    ///   "email": "kokos@test.com",
+    ///   "role": "Superuser",
+    ///   "sessions": []
+    /// }
+    /// </remarks>
     [Authorize]
     [HttpGet("{id}")]
     [SwaggerOperation(
@@ -173,6 +197,25 @@ public class UserController : ControllerBase
     }
 
     // PATCH /user/{id}
+    /// <summary>
+    /// Aktualizuj użytkownika
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// PATCH /user/3
+    /// {
+    ///   "role": "Superuser",
+    ///   "newPassword": "NewStrongPass123!"
+    /// }
+    ///
+    /// Przykładowy response:
+    /// {
+    ///   "id": 3,
+    ///   "email": "user1@test.com",
+    ///   "role": "Superuser"
+    /// }
+    /// </remarks>
     [Authorize]
     [HttpPatch("{id}")]
     [SwaggerOperation(
@@ -210,7 +253,18 @@ public class UserController : ControllerBase
     }
 
     // DELETE /user/{id}
-    [Authorize]
+    /// <summary>
+    /// Usuń użytkownika
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// DELETE /user/4
+    ///
+    /// Przykładowy response:
+    /// HTTP 204 No Content
+    /// </remarks>
+        [Authorize]
     [HttpDelete("{id}")]
     [SwaggerOperation(
         Summary = "Usuń użytkownika",

@@ -80,8 +80,13 @@ export default function SongsPage() {
     setModalSongId(songId);
     setSelectedSessions(new Set());
 
-    const data = await api.getSessions();
-    setSessions(data);
+    const res = await api.getSessions();
+
+    if (Array.isArray(res)) {
+      setSessions(res);
+    } else {
+      setSessions(res.items ?? []);
+    }
   }
   
 return (

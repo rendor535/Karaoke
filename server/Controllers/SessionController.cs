@@ -20,6 +20,25 @@ public class SessionController : ControllerBase
     }
 
     // Utwórz sesję
+    /// <summary>
+    /// Utwórz sesję karaoke
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// POST /session
+    /// {
+    ///   "name": "Impreza u Marcina"
+    /// }
+    ///
+    /// Przykładowy response:
+    /// {
+    ///   "id": 1,
+    ///   "name": "Impreza u Marcina",
+    ///   "isActive": false,
+    ///   "createdAt": "2026-01-24T18:00:00Z"
+    /// }
+    /// </remarks>
     [Authorize]
     [HttpPost]
     [SwaggerOperation(
@@ -48,7 +67,10 @@ public class SessionController : ControllerBase
 
         return Ok(session);
     }
-
+    /// <remarks>
+    /// Przykładowy response:
+    /// HTTP 200 OK
+    /// </remarks>
     [Authorize]
     [HttpPost("{id}/activate")]
     [SwaggerOperation(
@@ -80,7 +102,10 @@ public class SessionController : ControllerBase
 
         return Ok();
     }
-
+    /// <remarks>
+    /// Przykładowy response:
+    /// HTTP 200 OK
+    /// </remarks>
     [Authorize]
     [HttpPost("{id}/disable")]
     [SwaggerOperation(
@@ -112,6 +137,22 @@ public class SessionController : ControllerBase
     }
 
     // Dodaj gracza (nick)
+    /// <summary>
+    /// Dodaj gracza
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// POST /session/1/add-player
+    /// "PlayerOne"
+    ///
+    /// Przykładowy response:
+    /// {
+    ///   "id": 1,
+    ///   "nick": "PlayerOne",
+    ///   "totalScore": 0
+    /// }
+    /// </remarks>
     [Authorize]
     [HttpPost("{sessionId}/add-player")]
     [SwaggerOperation(
@@ -155,6 +196,22 @@ public class SessionController : ControllerBase
     }
 
     // Dodaj piosenkę do kolejki
+    /// <summary>
+    /// Dodaj utwór do kolejki
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// POST /session/1/add-song
+    /// 3
+    ///
+    /// Przykładowy response:
+    /// {
+    ///   "id": 5,
+    ///   "songId": 3,
+    ///   "position": 2
+    /// }
+    /// </remarks>
     [Authorize]
     [HttpPost("{sessionId}/add-song")]
     [SwaggerOperation(
@@ -201,6 +258,33 @@ public class SessionController : ControllerBase
     }
 
     // Pobierz sesję z kolejką i graczami
+    /// <summary>
+    /// Pobierz sesję
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy response:
+    /// {
+    ///   "id": 1,
+    ///   "name": "Test Session",
+    ///  "createdAt": "2026-01-24T18:00:00Z",
+    ///  "startedAt": "2026-01-24T18:30:00Z",
+    ///   "isActive": false,
+    ///   "players": [
+    ///     { "id": 1, "nick": "PlayerOne", "totalScore": 1200 }
+    ///   ],
+    ///   "queue": [
+    ///     {
+    ///       "id": 1,
+    ///       "position": 1,
+    ///       "song": {
+    ///         "id": 3,
+    ///         "title": "Money Money Money",
+    ///         "artist": "ABBA"
+    ///       }
+    ///     }
+    ///   ]
+    /// }
+    /// </remarks>
     [Authorize]
     [HttpGet("{sessionId}")]
     [SwaggerOperation(
@@ -261,6 +345,23 @@ public class SessionController : ControllerBase
     }
 
     // update session name, nw czy bedzie uzywane
+    /// <summary>
+    /// Aktualizuj sesję
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///     PUT /session/1
+    ///     {
+    ///       "name": "Nowa nazwa sesji"
+    ///     }
+    /// Przykładowy response:
+    ///   {
+    ///     "id": 1,
+    ///    "name": "Nowa nazwa sesji",
+    ///    "createdAt": "2026-01-24T18:00:00Z"
+    ///  }
+    /// </remarks>
+
     [Authorize]
     [HttpPatch("{sessionId}")]
     [SwaggerOperation(
@@ -335,7 +436,18 @@ public class SessionController : ControllerBase
     }
 
 
-    // GET /session?page=1&pageSize=10
+    /// <summary>
+    /// Lista sesji
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy response (Admin):
+    /// { 
+    ///   "items": [ { "id": 1, "name": "Test Session" } ],
+    ///   "page": 1,
+    ///   "pageSize": 10,
+    ///   "totalCount": 1
+    /// }
+    /// </remarks>
     [Authorize]
     [HttpGet]
     [SwaggerOperation( Summary = "Lista sesji", 
@@ -426,6 +538,28 @@ public class SessionController : ControllerBase
 
     // GET /session/active
     // Lista aktywnych sesji karaoke (LIVE)
+    /// <summary>
+    ///  Aktywne sesje
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy response:
+    /// [
+    /// {
+    ///  "id": 1,
+    ///  "name": "Test Session",
+    /// "createdAt": "2026-01-24T18:00:00Z",
+    /// "startedAt": "2026-01-24T18:30:00Z",
+    /// "isActive": true,
+    ///    "owner": {
+    ///
+    ///     "id": 2,
+    ///    "email": "test@example.com"
+    ///  },
+    /// "playersCount": 3,
+    /// "songsCount": 10
+    /// }
+    /// ]
+    /// </remarks>
     [Authorize]
     [HttpGet("active")]
     [SwaggerOperation(

@@ -2,6 +2,9 @@ namespace server.DTOs.Auth;
 
 public class LoginRequest
 {
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
+    /// <example>user1@test.com</example>
+    public string Email { get; set; } = "";
+
+    /// <example>User123!</example>
+    public string Password { get; set; } = "";
 }

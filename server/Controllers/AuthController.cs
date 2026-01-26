@@ -29,6 +29,28 @@ public class AuthController : ControllerBase
         this._db = db;
         this._config = config;
     }
+    /// <summary>
+    /// Logowanie użytkownika
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// POST /auth/login
+    /// {
+    ///   "email": "user1@test.com",
+    ///   "password": "User123!"
+    /// }
+    ///
+    /// Przykładowy response (200):
+    /// {
+    ///   "message": "Zalogowano pomyślnie"
+    /// }
+    ///
+    /// Przykładowy response (401):
+    /// {
+    ///   "message": "Nieprawidłowy email lub hasło"
+    /// }
+/// </remarks>
     [HttpPost("login")]
     [SwaggerOperation(
         Summary = "Logowanie użytkownika",
@@ -89,7 +111,16 @@ public class AuthController : ControllerBase
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
-    
+    /// <summary>
+    /// Wylogowanie użytkownika
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy response:
+    /// {
+    ///   "success": true,
+    ///   "message": "Wylogowano!"
+    /// }
+    /// </remarks>
     [HttpPost("logout")]
     [SwaggerOperation(
         Summary = "Wylogowanie",
@@ -109,6 +140,29 @@ public class AuthController : ControllerBase
 
         return Ok(new { success = true, message = "Wylogowano!" });
     }
+    /// <summary>
+    /// Rejestracja użytkownika
+    /// </summary>
+    /// <remarks>
+    /// Przykładowy request:
+    ///
+    /// POST /auth/register
+    /// {
+    ///   "email": "newuser@test.com",
+    ///   "password": "StrongPass123!",
+    ///   "role": "User"
+    /// }
+    ///
+    /// Przykładowy response (200):
+    /// {
+    ///   "message": "Konto utworzone"
+    /// }
+    ///
+    /// Przykładowy response (400):
+    /// {
+    ///   "message": "Konto o tym emailu już istnieje"
+    /// }
+/// </remarks>
     [HttpPost("register")]
     [SwaggerOperation(
         Summary = "Rejestracja użytkownika",
